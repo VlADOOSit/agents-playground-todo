@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:3001/api/tasks'; // Adjust if your backend port is different
+const API_URL = 'http://localhost:3001/api/tasks';
 
 const tasksApi = {
     getAllTasks: async () => {
