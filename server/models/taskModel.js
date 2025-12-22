@@ -19,11 +19,28 @@ class TaskModel {
         return result.rows[0];
     }
 
-    async updateTask(id, title, description, status) {
-        const result = await pool.query(
-            'UPDATE tasks SET title = $1, description = $2, status = $3 WHERE id = $4 RETURNING id, title, description, status, created_at, updated_at;',
-            [title, description, status, parseInt(id)]
-        );
+    async updateTask(id, updates) {
+        const setClauses = [];
+        const queryValues = [];
+        let paramIndex = 1;
+
+        for (const key in updates) {
+            if (Object.hasOwnProperty.call(updates, key)) {
+                setClauses.push(`${key} = $${paramIndex}`);
+                queryValues.push(updates[key]);
+                paramIndex++;
+            }
+        }
+
+        if (setClauses.length === 0) {
+            return null; // No fields to update
+        }
+
+        queryValues.push(id); // Add id for the WHERE clause
+
+        const query = `UPDATE tasks SET ${setClauses.join(', ')} WHERE id = $${paramIndex} RETURNING id, title, description, status, created_at, updated_at;`;
+
+        const result = await pool.query(query, queryValues);
         return result.rows[0];
     }
 

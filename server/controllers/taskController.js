@@ -38,9 +38,9 @@ class TaskController {
 
     async updateTask(req, res) {
         const { id } = req.params;
-        const { title, description, status } = req.body;
+        const updates = req.body;
         try {
-            const updatedTask = await TaskModel.updateTask(id, title, description, status);
+            const updatedTask = await TaskModel.updateTask(id, updates);
             if (!updatedTask) {
                 return res.status(404).json({ message: 'Task not found' });
             }
