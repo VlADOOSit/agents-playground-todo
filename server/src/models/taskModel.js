@@ -23,7 +23,7 @@ class TaskModel {
   async create({ title, description, status }) {
     const result = await pool.query(
       `INSERT INTO tasks (title, description, status)
-       VALUES ($1, $2, COALESCE($3, 'TODO'))
+       VALUES ($1, $2, COALESCE($3::task_status, 'TODO'::task_status))
        RETURNING id, title, description, status, created_at, updated_at`,
       [title, description ?? null, status ?? 'TODO']
     );
@@ -35,7 +35,7 @@ class TaskModel {
       `UPDATE tasks
        SET title = COALESCE($2, title),
            description = COALESCE($3, description),
-           status = COALESCE($4, status)
+           status = COALESCE($4::task_status, status)
        WHERE id = $1
        RETURNING id, title, description, status, created_at, updated_at`,
       [id, title ?? null, description ?? null, status ?? null]
