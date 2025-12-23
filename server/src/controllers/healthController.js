@@ -1,5 +1,5 @@
 class HealthController {
-  getHealth(_req, res) {
+  getHealth(req, res) {
     res.json({ status: 'ok' });
   }
 }
