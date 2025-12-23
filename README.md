@@ -14,7 +14,7 @@ A Node.js + React + Postgres TODO application scaffold. The backend follows an M
 -   Node.js LTS installed.
 -   A running Postgres instance with a database available for the app. The default connection string expects `postgres:postgres@localhost:5432/todo`.
 
-to run db in docker
+To run db in docker
 
 ```
 docker run --name todo-postgres -e POSTGRES_DB=todo -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres:13-alpine
@@ -50,6 +50,22 @@ docker run --name todo-postgres -e POSTGRES_DB=todo -e POSTGRES_USER=postgres -e
     npm run dev
     ```
 3. Open the printed local URL (for example, `http://localhost:5173/`). The frontend is preconfigured to call the API on `http://localhost:3001`.
+
+## Running the stack with Docker Compose
+
+1. Build and start the services from the project root:
+    ```bash
+    docker compose up --build
+    ```
+    This starts three containers:
+    - `postgres` on port `5432`
+    - `server` on port `3001` (runs migrations automatically on start)
+    - `client` on port `5173`
+2. Open `http://localhost:5173` to access the React frontend. The frontend talks to the API via `http://server:3001/api` inside the Compose network.
+3. To stop the stack, press `Ctrl+C` and optionally remove containers and the Postgres volume:
+    ```bash
+    docker compose down -v
+    ```
 
 ## Health check
 
