@@ -49,7 +49,7 @@ const TaskItem = ({ task, onDelete, onUpdateStatus, onUpdateTask }) => {
         <h3>{task.title}</h3>
         <div>
           <button onClick={() => setIsExpanded(!isExpanded)}>
-            {isExpanded ? 'Collapse' : 'Expand'}
+            {isExpanded ? '∧' : '∨'}
           </button>
           {!isEditing && <button onClick={handleEdit} style={{ marginLeft: '10px' }}>Edit</button>}
           <button onClick={handleDelete} style={{ marginLeft: '10px' }}>Delete</button>

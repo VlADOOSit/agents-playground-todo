@@ -10,8 +10,18 @@ Follow these steps to set up and run the application locally:
 
 You can start a local PostgreSQL database using Docker. Make sure Docker is installed and running on your system.
 
+First, **manually create** a `.env` file in the `server/` directory with the following content:
+
+```
+DATABASE_URL=postgres://postgres:postgres@localhost:5432/todo
+```
+
+Make sure the `DATABASE_URL` in the `.env` file matches the credentials used in the Docker command.
+
+Then, run the following Docker command to start the PostgreSQL database:
+
 ```bash
-docker run --name todo-postgres -e POSTGRES_DB=tododb -e POSTGRES_USER=user -e POSTGRES_PASSWORD=password -p 5432:5432 -d postgres:13-alpine
+docker run --name todo-postgres -e POSTGRES_DB=todo -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres:13-alpine
 ```
 
 ### 2. Backend Setup (server/)
