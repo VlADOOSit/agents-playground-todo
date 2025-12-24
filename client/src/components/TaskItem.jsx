@@ -43,8 +43,21 @@ const TaskItem = ({ task, onDelete, onUpdateStatus, onUpdateTask }) => {
     }
   };
 
+  const getStatusClass = (status) => {
+    switch (status) {
+      case 'TODO':
+        return 'status-todo';
+      case 'IN_PROGRESS':
+        return 'status-in_progress';
+      case 'DONE':
+        return 'status-done';
+      default:
+        return '';
+    }
+  };
+
   return (
-    <div className="task-item">
+    <div className={`task-item ${getStatusClass(task.status)}`}>
       <div className="task-item-header">
         <h3>{task.title}</h3>
         <div className="task-item-actions">

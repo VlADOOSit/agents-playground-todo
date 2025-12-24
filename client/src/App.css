@@ -86,6 +86,7 @@
 .task-item {
   background-color: var(--secondary-bg); /* Revert background color */
   padding: var(--spacing-lg); /* Re-add padding */
+  padding-left: calc(var(--spacing-lg) + 8px); /* Add space for status indicator */
   border-radius: 8px; /* Re-add border-radius */
   box-shadow: 0 2px 8px var(--shadow-light); /* Re-add box shadow */
   transition: transform 0.2s ease-in-out;
@@ -97,11 +98,41 @@
   border: none;
   width: 100%; /* Full width within container */
   min-width: 100%; /* Ensure minimum width is 100% */
+  position: relative;
+  overflow: hidden;
+}
+
+.task-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background-color: var(--accent-color);
+  opacity: 0.8;
+}
+
+/* Status color indicators */
+.task-item.status-todo::before {
+  background-color: #dc3545; /* Red for TODO */
+}
+
+.task-item.status-in_progress::before {
+  background-color: #ffc107; /* Yellow for IN_PROGRESS */
+}
+
+.task-item.status-done::before {
+  background-color: #28a745; /* Green for DONE */
 }
 
 .task-item:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px var(--shadow-medium); /* Re-add box shadow on hover */
+}
+
+.task-item:hover::before {
+  opacity: 1;
 }
 
 .task-item-header {
