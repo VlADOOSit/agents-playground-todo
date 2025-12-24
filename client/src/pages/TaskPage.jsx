@@ -8,11 +8,18 @@ const TaskPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [expandedIds, setExpandedIds] = useState(new Set());
+  const [activeFilter, setActiveFilter] = useState('ALL');
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const filters = [
+    { value: 'ALL', label: 'All' },
+    { value: 'TODO', label: 'Todo' },
+    { value: 'IN_PROGRESS', label: 'In progress' },
+    { value: 'DONE', label: 'Done' },
+  ];
 
   const dateValue = (value) => {
     const parsed = value ? new Date(value) : null;
@@ -22,6 +29,14 @@ const TaskPage = () => {
   const sortedTasks = useMemo(() => {
     return [...tasks].sort((a, b) => dateValue(b.created_at ?? b.createdAt) - dateValue(a.created_at ?? a.createdAt));
   }, [tasks]);
+
+  const filteredTasks = useMemo(() => {
+    if (activeFilter === 'ALL') {
+      return sortedTasks;
+    }
+
+    return sortedTasks.filter((task) => task.status === activeFilter);
+  }, [activeFilter, sortedTasks]);
 
   const loadTasks = async (nextPage) => {
     const requestedPage = nextPage ?? page;
@@ -151,12 +166,30 @@ const TaskPage = () => {
       ) : null}
 
       <div className="panel">
+        <div className="filter-row">
+          <span className="filter-row__label">Filter by status</span>
+          <div className="filter-row__chips">
+            {filters.map((filter) => (
+              <button
+                key={filter.value}
+                className={`filter-chip ${activeFilter === filter.value ? 'filter-chip--active' : ''}`}
+                type="button"
+                onClick={() => setActiveFilter(filter.value)}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
+        </div>
         {loading ? <p className="muted">Loading tasks...</p> : null}
         {error ? <p className="error-text">{error}</p> : null}
         {!loading && !error && sortedTasks.length === 0 ? <p className="muted">No tasks yet. Create the first one!</p> : null}
+        {!loading && !error && sortedTasks.length > 0 && filteredTasks.length === 0 ? (
+          <p className="muted">No tasks match this status yet.</p>
+        ) : null}
 
         <div className="task-grid">
-          {sortedTasks.map((task) => (
+          {filteredTasks.map((task) => (
             <TaskCard
               key={task.id}
               task={task}
