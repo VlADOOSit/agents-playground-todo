@@ -5,8 +5,20 @@ const VALID_STATUSES = new Set(['TODO', 'IN_PROGRESS', 'DONE']);
 class TaskController {
   async listTasks(req, res) {
     try {
-      const tasks = await taskModel.getAll();
-      res.json(tasks);
+      const pageParam = Number.parseInt(req.query.page, 10);
+      const page = Number.isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
+      const limit = 5;
+      const offset = (page - 1) * limit;
+
+      const [tasks, totalCount] = await Promise.all([taskModel.getAll({ limit, offset }), taskModel.getTotalCount()]);
+      const totalPages = Math.max(1, Math.ceil(totalCount / limit));
+
+      res.json({
+        tasks,
+        page,
+        totalPages,
+        totalCount,
+      });
     } catch (error) {
       console.error('Error fetching tasks', error);
       res.status(500).json({ error: 'Failed to fetch tasks' });

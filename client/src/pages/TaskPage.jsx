@@ -10,6 +10,9 @@ const TaskPage = () => {
   const [expandedIds, setExpandedIds] = useState(new Set());
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
 
   const dateValue = (value) => {
     const parsed = value ? new Date(value) : null;
@@ -20,21 +23,32 @@ const TaskPage = () => {
     return [...tasks].sort((a, b) => dateValue(b.created_at ?? b.createdAt) - dateValue(a.created_at ?? a.createdAt));
   }, [tasks]);
 
-  useEffect(() => {
-    const loadTasks = async () => {
-      try {
-        setLoading(true);
-        const data = await getTasks();
-        setTasks(data);
-        setError('');
-      } catch (err) {
-        setError('Unable to load tasks right now.');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const loadTasks = async (nextPage) => {
+    const requestedPage = nextPage ?? page;
+    try {
+      setLoading(true);
+      const data = await getTasks(requestedPage);
 
-    loadTasks();
+      if (data.totalPages < requestedPage && requestedPage > 1) {
+        await loadTasks(data.totalPages);
+        return;
+      }
+
+      setTasks(data.tasks);
+      setPage(data.page);
+      setTotalPages(data.totalPages);
+      setTotalCount(data.totalCount);
+      setError('');
+    } catch (err) {
+      setError('Unable to load tasks right now.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadTasks(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const toggleExpand = (taskId) => {
@@ -51,8 +65,8 @@ const TaskPage = () => {
 
   const handleCreate = async (payload) => {
     try {
-      const created = await createTask(payload);
-      setTasks((prev) => [created, ...prev]);
+      await createTask(payload);
+      await loadTasks(1);
       setIsFormVisible(false);
       setError('');
     } catch (err) {
@@ -75,12 +89,12 @@ const TaskPage = () => {
   const handleDelete = async (taskId) => {
     try {
       await deleteTask(taskId);
-      setTasks((prev) => prev.filter((task) => task.id !== taskId));
       setExpandedIds((prev) => {
         const next = new Set(prev);
         next.delete(taskId);
         return next;
       });
+      await loadTasks(page);
       setError('');
     } catch (err) {
       setError('Could not delete the task.');
@@ -154,6 +168,26 @@ const TaskPage = () => {
             />
           ))}
         </div>
+        {!loading && !error && totalCount > 0 ? (
+          <div className="pagination">
+            <div className="pagination__info">
+              Page {page} of {totalPages} · {totalCount} task{totalCount === 1 ? '' : 's'}
+            </div>
+            <div className="pagination__controls">
+              <button className="btn btn--ghost" type="button" onClick={() => loadTasks(page - 1)} disabled={page <= 1}>
+                Previous
+              </button>
+              <button
+                className="btn btn--ghost"
+                type="button"
+                onClick={() => loadTasks(page + 1)}
+                disabled={page >= totalPages}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );

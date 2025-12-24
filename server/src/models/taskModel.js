@@ -1,13 +1,20 @@
 const pool = require('../db/pool');
 
 class TaskModel {
-  async getAll() {
+  async getAll({ limit, offset }) {
     const result = await pool.query(
       `SELECT id, title, description, status, created_at, updated_at
        FROM tasks
-       ORDER BY created_at DESC`
+       ORDER BY created_at DESC
+       LIMIT $1 OFFSET $2`,
+      [limit, offset]
     );
     return result.rows;
+  }
+
+  async getTotalCount() {
+    const result = await pool.query('SELECT COUNT(*)::int AS count FROM tasks');
+    return result.rows[0]?.count ?? 0;
   }
 
   async getById(id) {
