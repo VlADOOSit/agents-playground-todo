@@ -3,8 +3,8 @@ import axios from 'axios';
 const API_URL = `${import.meta.env.VITE_API_URL}/tasks`;
 
 const tasksApi = {
-    getAllTasks: async () => {
-        const response = await axios.get(API_URL);
+    getAllTasks: async (page = 1, limit = 5) => {
+        const response = await axios.get(`${API_URL}?page=${page}&limit=${limit}`);
         return response.data;
     },
 

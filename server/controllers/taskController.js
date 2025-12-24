@@ -14,8 +14,21 @@ class TaskController {
 
     async getAllTasks(req, res) {
         try {
-            const tasks = await TaskModel.getAllTasks();
-            res.status(200).json(tasks);
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 5;
+
+            const tasks = await TaskModel.getAllTasks(page, limit);
+            const totalTasks = await TaskModel.getTasksCount();
+
+            res.status(200).json({
+                tasks,
+                pagination: {
+                    currentPage: page,
+                    totalPages: Math.ceil(totalTasks / limit),
+                    totalTasks,
+                    limit
+                }
+            });
         } catch (error) {
             console.error('Error getting tasks:', error);
             res.status(500).json({ message: 'Error getting tasks' });

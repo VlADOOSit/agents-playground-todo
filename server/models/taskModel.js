@@ -9,9 +9,18 @@ class TaskModel {
         return result.rows[0];
     }
 
-    async getAllTasks() {
-        const result = await pool.query('SELECT * FROM tasks ORDER BY created_at DESC;');
+    async getAllTasks(page = 1, limit = 5) {
+        const offset = (page - 1) * limit;
+        const result = await pool.query(
+            'SELECT * FROM tasks ORDER BY created_at DESC LIMIT $1 OFFSET $2;',
+            [limit, offset]
+        );
         return result.rows;
+    }
+
+    async getTasksCount() {
+        const result = await pool.query('SELECT COUNT(*) as total FROM tasks;');
+        return parseInt(result.rows[0].total);
     }
 
     async getTaskById(id) {

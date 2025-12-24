@@ -1,18 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import TaskItem from '../components/TaskItem';
 import TaskForm from '../components/TaskForm';
+import PaginationControls from '../components/PaginationControls';
 import tasksApi from '../api/tasks';
 
 const TasksPage = () => {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalTasks, setTotalTasks] = useState(0);
 
   useEffect(() => {
     const fetchTasks = async () => {
       try {
-        const data = await tasksApi.getAllTasks();
+        const data = await tasksApi.getAllTasks(currentPage, 5);
         console.log('Fetched tasks data:', data);
-        setTasks(data);
+        setTasks(data.tasks);
+        setTotalPages(data.pagination.totalPages);
+        setTotalTasks(data.pagination.totalTasks);
       } catch (error) {
         console.error('Error fetching tasks:', error);
       } finally {
@@ -20,7 +26,7 @@ const TasksPage = () => {
       }
     };
     fetchTasks();
-  }, []);
+  }, [currentPage]);
 
   const handleDeleteTask = async (id) => {
     try {
@@ -45,7 +51,7 @@ const TasksPage = () => {
   };
 
   const handleTaskCreated = (newTask) => {
-    setTasks([...tasks, newTask]);
+    setTasks([newTask, ...tasks]);
   };
 
   const handleUpdateTask = async (id, updatedFields) => {
@@ -59,6 +65,11 @@ const TasksPage = () => {
     } catch (error) {
       console.error('Error updating task:', error);
     }
+  };
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    setLoading(true);
   };
 
   return (
@@ -84,6 +95,13 @@ const TasksPage = () => {
           />
         ))}
       </div>
+
+      <PaginationControls
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalTasks={totalTasks}
+        onPageChange={handlePageChange}
+      />
     </div>
   );
 };
