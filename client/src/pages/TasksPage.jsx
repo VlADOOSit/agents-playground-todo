@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import TaskItem from '../components/TaskItem';
 import TaskForm from '../components/TaskForm';
+import TaskFilters from '../components/TaskFilters';
 import PaginationControls from '../components/PaginationControls';
 import tasksApi from '../api/tasks';
 
@@ -10,11 +11,12 @@ const TasksPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalTasks, setTotalTasks] = useState(0);
+  const [currentFilter, setCurrentFilter] = useState('ALL');
 
   useEffect(() => {
     const fetchTasks = async () => {
       try {
-        const data = await tasksApi.getAllTasks(currentPage, 5);
+        const data = await tasksApi.getAllTasks(currentPage, 5, currentFilter);
         console.log('Fetched tasks data:', data);
         setTasks(data.tasks);
         setTotalPages(data.pagination.totalPages);
@@ -26,7 +28,7 @@ const TasksPage = () => {
       }
     };
     fetchTasks();
-  }, [currentPage]);
+  }, [currentPage, currentFilter]);
 
   const handleDeleteTask = async (id) => {
     try {
@@ -72,10 +74,17 @@ const TasksPage = () => {
     setLoading(true);
   };
 
+  const handleFilterChange = (newFilter) => {
+    setCurrentFilter(newFilter);
+    setCurrentPage(1); // Reset to first page when filter changes
+    setLoading(true);
+  };
+
   return (
     <div>
       <h1>My Tasks</h1>
       <TaskForm onTaskCreated={handleTaskCreated} />
+      <TaskFilters currentFilter={currentFilter} onFilterChange={handleFilterChange} />
 
       {loading && (
         <div className="loading-indicator">

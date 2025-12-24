@@ -3,8 +3,12 @@ import axios from 'axios';
 const API_URL = `${import.meta.env.VITE_API_URL}/tasks`;
 
 const tasksApi = {
-    getAllTasks: async (page = 1, limit = 5) => {
-        const response = await axios.get(`${API_URL}?page=${page}&limit=${limit}`);
+    getAllTasks: async (page = 1, limit = 5, status = null) => {
+        let url = `${API_URL}?page=${page}&limit=${limit}`;
+        if (status && status !== 'ALL') {
+            url += `&status=${status}`;
+        }
+        const response = await axios.get(url);
         return response.data;
     },
 

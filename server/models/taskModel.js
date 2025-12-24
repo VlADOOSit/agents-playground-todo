@@ -9,17 +9,34 @@ class TaskModel {
         return result.rows[0];
     }
 
-    async getAllTasks(page = 1, limit = 5) {
+    async getAllTasks(page = 1, limit = 5, status = null) {
         const offset = (page - 1) * limit;
-        const result = await pool.query(
-            'SELECT * FROM tasks ORDER BY created_at DESC LIMIT $1 OFFSET $2;',
-            [limit, offset]
-        );
+        let query = 'SELECT * FROM tasks';
+        const queryValues = [limit, offset];
+        let paramIndex = 3;
+
+        if (status && status !== 'ALL') {
+            query += ' WHERE status = $' + paramIndex;
+            queryValues.push(status);
+            paramIndex++;
+        }
+
+        query += ' ORDER BY created_at DESC LIMIT $1 OFFSET $2;';
+
+        const result = await pool.query(query, queryValues);
         return result.rows;
     }
 
-    async getTasksCount() {
-        const result = await pool.query('SELECT COUNT(*) as total FROM tasks;');
+    async getTasksCount(status = null) {
+        let query = 'SELECT COUNT(*) as total FROM tasks';
+        const queryValues = [];
+
+        if (status && status !== 'ALL') {
+            query += ' WHERE status = $1';
+            queryValues.push(status);
+        }
+
+        const result = await pool.query(query, queryValues);
         return parseInt(result.rows[0].total);
     }
 

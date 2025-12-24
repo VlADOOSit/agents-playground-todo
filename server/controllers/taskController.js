@@ -16,9 +16,10 @@ class TaskController {
         try {
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 5;
+            const status = req.query.status || null;
 
-            const tasks = await TaskModel.getAllTasks(page, limit);
-            const totalTasks = await TaskModel.getTasksCount();
+            const tasks = await TaskModel.getAllTasks(page, limit, status);
+            const totalTasks = await TaskModel.getTasksCount(status);
 
             res.status(200).json({
                 tasks,
