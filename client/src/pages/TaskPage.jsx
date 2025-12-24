@@ -30,19 +30,12 @@ const TaskPage = () => {
     return [...tasks].sort((a, b) => dateValue(b.created_at ?? b.createdAt) - dateValue(a.created_at ?? a.createdAt));
   }, [tasks]);
 
-  const filteredTasks = useMemo(() => {
-    if (activeFilter === 'ALL') {
-      return sortedTasks;
-    }
-
-    return sortedTasks.filter((task) => task.status === activeFilter);
-  }, [activeFilter, sortedTasks]);
-
   const loadTasks = async (nextPage) => {
     const requestedPage = nextPage ?? page;
     try {
       setLoading(true);
-      const data = await getTasks(requestedPage);
+      const status = activeFilter === 'ALL' ? undefined : activeFilter;
+      const data = await getTasks({ page: requestedPage, status });
 
       if (data.totalPages < requestedPage && requestedPage > 1) {
         await loadTasks(data.totalPages);
@@ -64,7 +57,7 @@ const TaskPage = () => {
   useEffect(() => {
     loadTasks(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [activeFilter]);
 
   const toggleExpand = (taskId) => {
     setExpandedIds((prev) => {
@@ -183,13 +176,14 @@ const TaskPage = () => {
         </div>
         {loading ? <p className="muted">Loading tasks...</p> : null}
         {error ? <p className="error-text">{error}</p> : null}
-        {!loading && !error && sortedTasks.length === 0 ? <p className="muted">No tasks yet. Create the first one!</p> : null}
-        {!loading && !error && sortedTasks.length > 0 && filteredTasks.length === 0 ? (
-          <p className="muted">No tasks match this status yet.</p>
+        {!loading && !error && sortedTasks.length === 0 ? (
+          <p className="muted">
+            {activeFilter === 'ALL' ? 'No tasks yet. Create the first one!' : 'No tasks match this status yet.'}
+          </p>
         ) : null}
 
         <div className="task-grid">
-          {filteredTasks.map((task) => (
+          {sortedTasks.map((task) => (
             <TaskCard
               key={task.id}
               task={task}
