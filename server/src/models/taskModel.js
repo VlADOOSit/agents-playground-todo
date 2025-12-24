@@ -35,7 +35,8 @@ class TaskModel {
       `UPDATE tasks
        SET title = COALESCE($2, title),
            description = COALESCE($3, description),
-           status = COALESCE($4::task_status, status)
+           status = COALESCE($4::task_status, status),
+           updated_at = now()
        WHERE id = $1
        RETURNING id, title, description, status, created_at, updated_at`,
       [id, title ?? null, description ?? null, status ?? null]
