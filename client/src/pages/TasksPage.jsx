@@ -4,6 +4,7 @@ import tasksApi from '../api/tasks';
 
 const TasksPage = () => {
   const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDescription, setNewTaskDescription] = useState('');
   const [newTaskStatus, setNewTaskStatus] = useState('TODO');
@@ -16,6 +17,8 @@ const TasksPage = () => {
         setTasks(data);
       } catch (error) {
         console.error('Error fetching tasks:', error);
+      } finally {
+        setLoading(false);
       }
     };
     fetchTasks();
@@ -76,32 +79,37 @@ const TasksPage = () => {
   return (
     <div>
       <h1>My Tasks</h1>
-      <form onSubmit={handleCreateTask} style={{ marginBottom: '20px', display: 'flex', flexDirection: 'column', maxWidth: '400px', margin: '0 auto' }}>
+      <form onSubmit={handleCreateTask} className="task-form">
         <input
           type="text"
           placeholder="Task Title"
           value={newTaskTitle}
           onChange={(e) => setNewTaskTitle(e.target.value)}
           required
-          style={{ padding: '8px', marginBottom: '10px' }}
         />
         <textarea
           placeholder="Task Description"
           value={newTaskDescription}
           onChange={(e) => setNewTaskDescription(e.target.value)}
-          style={{ padding: '8px', marginBottom: '10px' }}
         ></textarea>
         <select
           value={newTaskStatus}
           onChange={(e) => setNewTaskStatus(e.target.value)}
-          style={{ padding: '8px', marginBottom: '10px' }}
         >
           <option value="TODO">TODO</option>
           <option value="IN_PROGRESS">IN_PROGRESS</option>
           <option value="DONE">DONE</option>
         </select>
-        <button type="submit" style={{ padding: '10px', backgroundColor: '#007bff', color: 'white', border: 'none', cursor: 'pointer' }}>Add Task</button>
+        <button type="submit">Add Task</button>
       </form>
+
+      {loading && (
+        <div className="loading-indicator">
+          <div className="loading-spinner"></div>
+          <p>Loading tasks...</p>
+        </div>
+      )}
+
       <div className="tasks-list">
         {tasks.map((task) => (
           <TaskItem

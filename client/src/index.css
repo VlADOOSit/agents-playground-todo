@@ -1,25 +1,53 @@
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+  /* Minimalist Color Palette */
+  --primary-bg: #f9f9f9; /* Light background */
+  --secondary-bg: #ffffff; /* Card/component background */
+  --primary-text: #333333;
+  --secondary-text: #666666;
+  --border-color: #e0e0e0;
+  --accent-color: #007bff; /* Primary action color */
+  --accent-hover: #0056b3; /* Darker accent on hover */
+  --danger-color: #dc3545;
+  --danger-hover: #c82333;
+  --shadow-light: rgba(0, 0, 0, 0.05);
+  --shadow-medium: rgba(0, 0, 0, 0.1);
+
+  /* Typography */
+  --font-family-sans: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  --font-size-base: 16px;
+  --line-height-base: 1.5;
+  --heading-weight: 600;
+  --body-weight: 400;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
 
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
+/* Dark Mode Adjustments */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --primary-bg: #1a1a1a;
+    --secondary-bg: #282828;
+    --primary-text: #e0e0e0;
+    --secondary-text: #aaaaaa;
+    --border-color: #444444;
+    --shadow-light: rgba(255, 255, 255, 0.05);
+    --shadow-medium: rgba(255, 255, 255, 0.1);
+    --accent-color: #61dafb; /* A light blue for dark mode accent */
+    --accent-hover: #21a1f1;
+    --danger-color: #ff6b6b;
+    --danger-hover: #e63946;
+  }
 }
 
 body {
@@ -28,41 +56,94 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
+  font-weight: var(--body-weight);
+  color: var(--primary-text);
+  background-color: var(--primary-bg);
+}
+
+#root {
+  max-width: 1600px; /* Much wider for more content */
+  margin: 0 auto;
+  padding: var(--spacing-xl);
+  text-align: center;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 h1 {
-  font-size: 3.2em;
+  font-size: 2.5em; /* Slightly smaller for minimalism */
   line-height: 1.1;
+  color: var(--primary-text);
+  margin-bottom: var(--spacing-xl);
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+textarea,
+select {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-base);
+  color: var(--primary-text);
+  background-color: var(--secondary-bg);
+  box-sizing: border-box; /* Include padding in width */
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input[type="text"]:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+  outline: none;
 }
 
 button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
+  border-radius: 5px;
+  border: none; /* Minimalist buttons have no border */
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-base);
+  font-weight: var(--heading-weight);
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: var(--accent-color);
+  color: white;
   cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  transition: background-color 0.25s, box-shadow 0.25s;
+  outline: none;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+button:hover {
+  background-color: var(--accent-hover);
+  box-shadow: 0 2px 8px var(--shadow-light);
+}
+
+button:focus-visible {
+  box-shadow: 0 0 0 3px var(--accent-color), 0 0 0 5px rgba(0, 123, 255, 0.3);
+}
+
+button.danger {
+  background-color: var(--danger-color);
+}
+
+button.danger:hover {
+  background-color: var(--danger-hover);
+}
+
+/* Link styles */
+a {
+  font-weight: var(--body-weight);
+  color: var(--accent-color);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
 }

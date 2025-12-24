@@ -45,44 +45,41 @@ const TaskItem = ({ task, onDelete, onUpdateStatus, onUpdateTask }) => {
 
   return (
     <div className="task-item">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="task-item-header">
         <h3>{task.title}</h3>
-        <div>
-          <button onClick={() => setIsExpanded(!isExpanded)}>
+        <div className="task-item-actions">
+          {!isEditing && <button onClick={handleEdit}>Edit</button>}
+          <button onClick={handleDelete} className="danger">Delete</button>
+          <button onClick={() => setIsExpanded(!isExpanded)} className="expand-button">
             {isExpanded ? '∧' : '∨'}
           </button>
-          {!isEditing && <button onClick={handleEdit} style={{ marginLeft: '10px' }}>Edit</button>}
-          <button onClick={handleDelete} style={{ marginLeft: '10px' }}>Delete</button>
         </div>
       </div>
       {isExpanded && (
-        <div style={{ marginTop: '10px' }}>
+        <div className="task-item-details">
           {isEditing ? (
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div className="task-edit-form">
               <input
                 type="text"
                 value={editedTitle}
                 onChange={(e) => setEditedTitle(e.target.value)}
                 required
-                style={{ padding: '8px', marginBottom: '10px' }}
               />
               <textarea
                 value={editedDescription}
                 onChange={(e) => setEditedDescription(e.target.value)}
-                style={{ padding: '8px', marginBottom: '10px' }}
               ></textarea>
               <select
                 value={editedStatus}
                 onChange={(e) => setEditedStatus(e.target.value)}
-                style={{ padding: '8px', marginBottom: '10px' }}
               >
                 <option value="TODO">TODO</option>
                 <option value="IN_PROGRESS">IN_PROGRESS</option>
                 <option value="DONE">DONE</option>
               </select>
-              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <button onClick={handleSaveEdit} style={{ marginRight: '10px' }}>Save</button>
-                <button onClick={handleCancelEdit}>Cancel</button>
+              <div className="edit-form-actions">
+                <button onClick={handleSaveEdit}>Save</button>
+                <button onClick={handleCancelEdit} className="secondary">Cancel</button>
               </div>
             </div>
           ) : (
@@ -90,7 +87,7 @@ const TaskItem = ({ task, onDelete, onUpdateStatus, onUpdateTask }) => {
               <p><strong>Description:</strong> {task.description}</p>
               <p>
                 <strong>Status:</strong>
-                <select value={task.status} onChange={handleChangeStatus} style={{ marginLeft: '10px' }}>
+                <select value={task.status} onChange={handleChangeStatus} className="status-select">
                   <option value="TODO">TODO</option>
                   <option value="IN_PROGRESS">IN_PROGRESS</option>
                   <option value="DONE">DONE</option>
