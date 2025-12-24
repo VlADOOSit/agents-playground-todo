@@ -1,5 +1,7 @@
 const taskModel = require('../models/taskModel');
 
+const VALID_STATUSES = new Set(['TODO', 'IN_PROGRESS', 'DONE']);
+
 class TaskController {
   async listTasks(req, res) {
     try {
@@ -31,8 +33,12 @@ class TaskController {
     try {
       const { title, description, status } = req.body;
 
-      if (!title) {
+      if (!title || !title.trim()) {
         return res.status(400).json({ error: 'Title is required' });
+      }
+
+      if (status && !VALID_STATUSES.has(status)) {
+        return res.status(400).json({ error: 'Invalid status value' });
       }
 
       const newTask = await taskModel.create({ title, description, status });
@@ -47,6 +53,14 @@ class TaskController {
     try {
       const { id } = req.params;
       const { title, description, status } = req.body;
+
+      if (title !== undefined && !title.trim()) {
+        return res.status(400).json({ error: 'Title cannot be empty' });
+      }
+
+      if (status !== undefined && !VALID_STATUSES.has(status)) {
+        return res.status(400).json({ error: 'Invalid status value' });
+      }
 
       const updatedTask = await taskModel.update(id, { title, description, status });
 
