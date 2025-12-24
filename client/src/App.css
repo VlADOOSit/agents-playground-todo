@@ -22,6 +22,37 @@
   box-sizing: border-box;
 }
 
+.task-form-container {
+  width: 100%;
+  max-width: 500px; /* Even narrower form */
+  margin: var(--spacing-xl) auto; /* Center the form */
+  box-sizing: border-box;
+}
+
+.create-task-button {
+  background-color: var(--accent-color);
+  color: white;
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: 6px;
+  font-size: var(--font-size-base);
+  font-weight: var(--heading-weight);
+  cursor: pointer;
+  transition: background-color 0.25s, box-shadow 0.25s;
+  width: 100%;
+  margin-bottom: var(--spacing-md);
+}
+
+.create-task-button:hover {
+  background-color: var(--accent-hover);
+  box-shadow: 0 2px 8px var(--shadow-light);
+}
+
+.create-task-button:disabled {
+  background-color: var(--border-color);
+  cursor: not-allowed;
+}
+
 .task-form {
   background-color: var(--secondary-bg);
   padding: var(--spacing-lg);
@@ -31,9 +62,19 @@
   flex-direction: column;
   gap: var(--spacing-md);
   width: 100%;
-  max-width: 500px; /* Even narrower form */
-  margin: var(--spacing-xl) auto; /* Center the form */
   box-sizing: border-box;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .task-form input,
@@ -150,6 +191,24 @@
   margin-top: var(--spacing-md);
 }
 
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+}
+
+.cancel-button {
+  background-color: var(--secondary-bg);
+  color: var(--secondary-text);
+  border: 1px solid var(--border-color);
+}
+
+.cancel-button:hover {
+  background-color: var(--border-color);
+  color: var(--primary-text);
+}
+
 button.secondary {
   background-color: #6c757d;
 }
@@ -202,5 +261,14 @@ button.secondary:hover {
   .edit-form-actions {
     flex-direction: column;
     width: 100%;
+  }
+
+  .form-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .create-task-button {
+    margin-bottom: var(--spacing-sm);
   }
 }

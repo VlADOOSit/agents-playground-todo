@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import TaskItem from '../components/TaskItem';
+import TaskForm from '../components/TaskForm';
 import tasksApi from '../api/tasks';
 
 const TasksPage = () => {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [newTaskDescription, setNewTaskDescription] = useState('');
-  const [newTaskStatus, setNewTaskStatus] = useState('TODO');
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -46,21 +44,8 @@ const TasksPage = () => {
     }
   };
 
-  const handleCreateTask = async (e) => {
-    e.preventDefault();
-    try {
-      const newTask = await tasksApi.createTask({
-        title: newTaskTitle,
-        description: newTaskDescription,
-        status: newTaskStatus,
-      });
-      setTasks([...tasks, newTask]);
-      setNewTaskTitle('');
-      setNewTaskDescription('');
-      setNewTaskStatus('TODO');
-    } catch (error) {
-      console.error('Error creating task:', error);
-    }
+  const handleTaskCreated = (newTask) => {
+    setTasks([...tasks, newTask]);
   };
 
   const handleUpdateTask = async (id, updatedFields) => {
@@ -79,29 +64,7 @@ const TasksPage = () => {
   return (
     <div>
       <h1>My Tasks</h1>
-      <form onSubmit={handleCreateTask} className="task-form">
-        <input
-          type="text"
-          placeholder="Task Title"
-          value={newTaskTitle}
-          onChange={(e) => setNewTaskTitle(e.target.value)}
-          required
-        />
-        <textarea
-          placeholder="Task Description"
-          value={newTaskDescription}
-          onChange={(e) => setNewTaskDescription(e.target.value)}
-        ></textarea>
-        <select
-          value={newTaskStatus}
-          onChange={(e) => setNewTaskStatus(e.target.value)}
-        >
-          <option value="TODO">TODO</option>
-          <option value="IN_PROGRESS">IN_PROGRESS</option>
-          <option value="DONE">DONE</option>
-        </select>
-        <button type="submit">Add Task</button>
-      </form>
+      <TaskForm onTaskCreated={handleTaskCreated} />
 
       {loading && (
         <div className="loading-indicator">
