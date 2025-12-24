@@ -253,6 +253,14 @@
   transform: translateY(1px);
 }
 
+.btn:disabled,
+.btn[aria-disabled='true'] {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
 .btn--primary {
   background: linear-gradient(135deg, #3b82f6, #2563eb);
   color: white;

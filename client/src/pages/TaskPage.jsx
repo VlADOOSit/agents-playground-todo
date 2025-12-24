@@ -110,15 +110,18 @@ const TaskPage = () => {
           <p className="lede">Create new tasks, update progress, and keep work in sync with the backend.</p>
         </div>
         <div className="page__actions">
-          <button
-            className="btn btn--primary"
-            onClick={() => {
-              setEditingTask(null);
-              setIsFormVisible(true);
-            }}
-          >
-            + New task
-          </button>
+          {!isFormVisible ? (
+            <button
+              className="btn btn--primary"
+              type="button"
+              onClick={() => {
+                setEditingTask(null);
+                setIsFormVisible(true);
+              }}
+            >
+              + New task
+            </button>
+          ) : null}
           {isFormVisible ? (
             <button className="btn btn--ghost" onClick={() => setIsFormVisible(false)}>
               Close form
