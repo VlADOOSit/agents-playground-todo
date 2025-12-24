@@ -1,7 +1,13 @@
 import client from './client';
 
-export const getTasks = async (page = 1) => {
-  const { data } = await client.get('/tasks', { params: { page } });
+export const getTasks = async ({ page = 1, status } = {}) => {
+  const params = { page };
+
+  if (status) {
+    params.status = status;
+  }
+
+  const { data } = await client.get('/tasks', { params });
   return data;
 };
 

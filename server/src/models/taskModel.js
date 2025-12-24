@@ -1,19 +1,36 @@
 const pool = require('../db/pool');
 
 class TaskModel {
-  async getAll({ limit, offset }) {
+  async getAll({ limit, offset, status }) {
+    const values = [limit, offset];
+    let whereClause = '';
+
+    if (status) {
+      values.push(status);
+      whereClause = `WHERE status = $${values.length}`;
+    }
+
     const result = await pool.query(
       `SELECT id, title, description, status, created_at, updated_at
        FROM tasks
+       ${whereClause}
        ORDER BY created_at DESC
        LIMIT $1 OFFSET $2`,
-      [limit, offset]
+      values
     );
     return result.rows;
   }
 
-  async getTotalCount() {
-    const result = await pool.query('SELECT COUNT(*)::int AS count FROM tasks');
+  async getTotalCount(status) {
+    const values = [];
+    let whereClause = '';
+
+    if (status) {
+      values.push(status);
+      whereClause = 'WHERE status = $1';
+    }
+
+    const result = await pool.query(`SELECT COUNT(*)::int AS count FROM tasks ${whereClause}`, values);
     return result.rows[0]?.count ?? 0;
   }
 

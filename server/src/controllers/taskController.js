@@ -9,8 +9,16 @@ class TaskController {
       const page = Number.isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
       const limit = 5;
       const offset = (page - 1) * limit;
+      const status = req.query.status;
 
-      const [tasks, totalCount] = await Promise.all([taskModel.getAll({ limit, offset }), taskModel.getTotalCount()]);
+      if (status && !VALID_STATUSES.has(status)) {
+        return res.status(400).json({ error: 'Invalid status value' });
+      }
+
+      const [tasks, totalCount] = await Promise.all([
+        taskModel.getAll({ limit, offset, status }),
+        taskModel.getTotalCount(status),
+      ]);
       const totalPages = Math.max(1, Math.ceil(totalCount / limit));
 
       res.json({
