@@ -1,0 +1,247 @@
+openapi: 3.0.3
+info:
+  title: TODO API
+  version: 1.0.0
+  description: >
+    Express + Postgres API for managing TODO tasks. All endpoints are prefixed
+    with `/api`. Pagination on the tasks collection is fixed to 5 items per
+    page.
+servers:
+  - url: http://localhost:3001
+    description: Local development
+paths:
+  /api/health:
+    get:
+      summary: Health check
+      tags: [health]
+      responses:
+        '200':
+          description: Service is healthy.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: ok
+  /api/tasks:
+    get:
+      summary: List tasks
+      tags: [tasks]
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: 1-based page index (5 tasks per page).
+        - in: query
+          name: status
+          schema:
+            $ref: '#/components/schemas/TaskStatus'
+          description: Optional filter by task status.
+      responses:
+        '200':
+          description: Paginated list of tasks.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTasks'
+        '400':
+          description: Invalid query parameters.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Invalid status value
+    post:
+      summary: Create a task
+      tags: [tasks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskInput'
+            examples:
+              minimal:
+                summary: Minimal payload
+                value:
+                  title: Buy milk
+              full:
+                summary: With description and status
+                value:
+                  title: Buy milk
+                  description: 2% or oat milk
+                  status: TODO
+      responses:
+        '201':
+          description: Task created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Validation failed (missing title or invalid status).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Title is required
+  /api/tasks/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+        description: Task identifier.
+    get:
+      summary: Get a task
+      tags: [tasks]
+      responses:
+        '200':
+          description: Task found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          description: Task not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Task not found
+    put:
+      summary: Update a task
+      tags: [tasks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTaskInput'
+            example:
+              title: Buy groceries
+              description: Include fruit
+              status: IN_PROGRESS
+      responses:
+        '200':
+          description: Task updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Validation failed (empty title or invalid status).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Invalid status value
+        '404':
+          description: Task not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Task not found
+    delete:
+      summary: Delete a task
+      tags: [tasks]
+      responses:
+        '204':
+          description: Task deleted.
+        '404':
+          description: Task not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Task not found
+components:
+  schemas:
+    TaskStatus:
+      type: string
+      description: Task status enum as stored in Postgres.
+      enum: [TODO, IN_PROGRESS, DONE]
+    Task:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, title, status, created_at, updated_at]
+    PaginatedTasks:
+      type: object
+      properties:
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+        page:
+          type: integer
+          minimum: 1
+        totalPages:
+          type: integer
+          minimum: 1
+        totalCount:
+          type: integer
+          minimum: 0
+      required: [tasks, page, totalPages, totalCount]
+    CreateTaskInput:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+      required: [title]
+    UpdateTaskInput:
+      type: object
+      properties:
+        title:
+          type: string
+          description: If provided, cannot be an empty string.
+        description:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+      description: Provide any combination of fields to update.
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
