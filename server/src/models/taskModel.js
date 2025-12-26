@@ -1,82 +1,80 @@
 const pool = require('../db/pool');
 
 class TaskModel {
-  async getAll({ limit, offset, status }) {
-    const values = [limit, offset];
-    let whereClause = '';
+	async getAll({ limit, offset, status }) {
+		const values = [limit, offset];
+		let whereClause = '';
 
-    if (status) {
-      values.push(status);
-      whereClause = `WHERE status = $${values.length}`;
-    }
+		if (status) {
+			values.push(status);
+			whereClause = `WHERE status = $${values.length}`;
+		}
 
-    const result = await pool.query(
-      `SELECT id, title, description, status, created_at, updated_at
-       FROM tasks
-       ${whereClause}
-       ORDER BY created_at DESC
-       LIMIT $1 OFFSET $2`,
-      values
-    );
-    return result.rows;
-  }
+		const result = await pool.query(
+			`SELECT id, title, description, status, created_at, updated_at
+			FROM tasks
+			${whereClause}
+			ORDER BY created_at DESC
+			LIMIT $1 OFFSET $2`,
+			values
+		);
+		return result.rows;
+	}
 
-  async getTotalCount(status) {
-    const values = [];
-    let whereClause = '';
+	async getTotalCount(status) {
+		const values = [];
+		let whereClause = '';
 
-    if (status) {
-      values.push(status);
-      whereClause = 'WHERE status = $1';
-    }
+		if (status) {
+			values.push(status);
+			whereClause = 'WHERE status = $1';
+		}
 
-    const result = await pool.query(`SELECT COUNT(*)::int AS count FROM tasks ${whereClause}`, values);
-    return result.rows[0]?.count ?? 0;
-  }
+		const result = await pool.query(`SELECT COUNT(*)::int AS count FROM tasks ${whereClause}`, values);
+		return result.rows[0]?.count ?? 0;
+	}
 
-  async getById(id) {
-    const result = await pool.query(
-      `SELECT id, title, description, status, created_at, updated_at
-       FROM tasks
-       WHERE id = $1`,
-      [id]
-    );
-    return result.rows[0] || null;
-  }
+	async getById(id) {
+		const result = await pool.query(
+			`SELECT id, title, description, status, created_at, updated_at FROM tasks WHERE id = $1`,
+			[id]
+		);
+		return result.rows[0] || null;
+	}
 
-  async create({ title, description, status }) {
-    const result = await pool.query(
-      `INSERT INTO tasks (title, description, status)
-       VALUES ($1, $2, COALESCE($3::task_status, 'TODO'::task_status))
-       RETURNING id, title, description, status, created_at, updated_at`,
-      [title, description ?? null, status ?? 'TODO']
-    );
-    return result.rows[0];
-  }
+	async create({ title, description, status }) {
+		const result = await pool.query(
+			`INSERT INTO tasks (title, description, status)
+       		VALUES ($1, $2, COALESCE($3::task_status, 'TODO'::task_status))
+       		RETURNING id, title, description, status, created_at, updated_at`,
+			[title, description ?? null, status ?? 'TODO']
+		);
+		return result.rows[0];
+	}
 
-  async update(id, { title, description, status }) {
-    const result = await pool.query(
-      `UPDATE tasks
-       SET title = COALESCE($2, title),
-           description = COALESCE($3, description),
-           status = COALESCE($4::task_status, status),
-           updated_at = now()
-       WHERE id = $1
-       RETURNING id, title, description, status, created_at, updated_at`,
-      [id, title ?? null, description ?? null, status ?? null]
-    );
-    return result.rows[0] || null;
-  }
+	async update(id, { title, description, status }) {
+		const result = await pool.query(
+			`UPDATE tasks
+      		SET title = COALESCE($2, title),
+           	description = COALESCE($3, description),
+           	status = COALESCE($4::task_status, status),
+           	updated_at = now()
+       		WHERE id = $1
+       		RETURNING id, title, description, status, created_at, updated_at`,
+			[id, title ?? null, description ?? null, status ?? null]
+		);
+		return result.rows[0] || null;
+	}
 
-  async delete(id) {
-    const result = await pool.query(
-      `DELETE FROM tasks
-       WHERE id = $1
-       RETURNING id`,
-      [id]
-    );
-    return result.rowCount > 0;
-  }
+	async delete(id) {
+		const result = await pool.query(
+			`DELETE FROM tasks
+       		WHERE id = $1
+       		RETURNING id`,
+			[id]
+		);
+		return result.rowCount > 0;
+	}
 }
 
 module.exports = new TaskModel();
