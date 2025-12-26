@@ -1,4 +1,5 @@
 const pool = require('../db/pool');
+const { TASKS_PER_PAGE } = require('../utils/constant');
 
 class TaskModel {
     async createTask(title, description, status) {
@@ -9,7 +10,7 @@ class TaskModel {
         return result.rows[0];
     }
 
-    async getAllTasks(page = 1, limit = 5, status = null) {
+    async getAllTasks(page = 1, limit = TASKS_PER_PAGE, status = null) {
         const offset = (page - 1) * limit;
         let query = 'SELECT * FROM tasks';
         const queryValues = [limit, offset];
@@ -59,10 +60,10 @@ class TaskModel {
         }
 
         if (setClauses.length === 0) {
-            return null; // No fields to update
+            return null;
         }
 
-        queryValues.push(id); // Add id for the WHERE clause
+        queryValues.push(id);
 
         const query = `UPDATE tasks SET ${setClauses.join(', ')} WHERE id = $${paramIndex} RETURNING id, title, description, status, created_at, updated_at;`;
 

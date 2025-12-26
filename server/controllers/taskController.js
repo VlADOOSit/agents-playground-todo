@@ -1,4 +1,5 @@
 const TaskModel = require('../models/taskModel');
+const { TASKS_PER_PAGE } = require('../utils/constant');
 
 class TaskController {
     async createTask(req, res) {
@@ -15,7 +16,7 @@ class TaskController {
     async getAllTasks(req, res) {
         try {
             const page = parseInt(req.query.page) || 1;
-            const limit = parseInt(req.query.limit) || 5;
+            const limit = parseInt(req.query.limit) || TASKS_PER_PAGE;
             const status = req.query.status || null;
 
             const tasks = await TaskModel.getAllTasks(page, limit, status);

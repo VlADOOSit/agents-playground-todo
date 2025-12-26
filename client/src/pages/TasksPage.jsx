@@ -4,6 +4,7 @@ import TaskForm from '../components/TaskForm';
 import TaskFilters from '../components/TaskFilters';
 import PaginationControls from '../components/PaginationControls';
 import tasksApi from '../api/tasks';
+import { TASKS_PER_PAGE } from '../utils/constant';
 
 const TasksPage = () => {
   const [tasks, setTasks] = useState([]);
@@ -16,7 +17,7 @@ const TasksPage = () => {
   useEffect(() => {
     const fetchTasks = async () => {
       try {
-        const data = await tasksApi.getAllTasks(currentPage, 5, currentFilter);
+        const data = await tasksApi.getAllTasks(currentPage, TASKS_PER_PAGE, currentFilter);
         console.log('Fetched tasks data:', data);
         setTasks(data.tasks);
         setTotalPages(data.pagination.totalPages);
@@ -33,9 +34,24 @@ const TasksPage = () => {
   const handleDeleteTask = async (id) => {
     try {
       await tasksApi.deleteTask(id);
-      setTasks(tasks.filter((task) => task.id !== id));
+
+      const data = await tasksApi.getAllTasks(currentPage, TASKS_PER_PAGE, currentFilter);
+
+      if (data.tasks.length === 0 && currentPage > 1) {
+        const prevPage = currentPage - 1;
+        const prevPageData = await tasksApi.getAllTasks(prevPage, TASKS_PER_PAGE, currentFilter);
+        setCurrentPage(prevPage);
+        setTasks(prevPageData.tasks);
+        setTotalPages(prevPageData.pagination.totalPages);
+        setTotalTasks(prevPageData.pagination.totalTasks);
+      } else {
+        setTasks(data.tasks);
+        setTotalPages(data.pagination.totalPages);
+        setTotalTasks(data.pagination.totalTasks);
+      }
     } catch (error) {
       console.error('Error deleting task:', error);
+      setTasks(tasks.filter((task) => task.id !== id));
     }
   };
 
@@ -52,8 +68,16 @@ const TasksPage = () => {
     }
   };
 
-  const handleTaskCreated = (newTask) => {
-    setTasks([newTask, ...tasks]);
+  const handleTaskCreated = async (newTask) => {
+    try {
+      const data = await tasksApi.getAllTasks(currentPage, TASKS_PER_PAGE, currentFilter);
+      setTasks(data.tasks);
+      setTotalPages(data.pagination.totalPages);
+      setTotalTasks(data.pagination.totalTasks);
+    } catch (error) {
+      console.error('Error refetching tasks after creation:', error);
+      setTasks([newTask, ...tasks]);
+    }
   };
 
   const handleUpdateTask = async (id, updatedFields) => {
@@ -76,7 +100,7 @@ const TasksPage = () => {
 
   const handleFilterChange = (newFilter) => {
     setCurrentFilter(newFilter);
-    setCurrentPage(1); // Reset to first page when filter changes
+    setCurrentPage(1);
     setLoading(true);
   };
 
