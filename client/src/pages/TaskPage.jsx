@@ -119,8 +119,13 @@ const TaskPage = () => {
   };
 
   const handleEditStart = (task) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      next.add(task.id);
+      return next;
+    });
     setEditingTask(task);
-    setIsFormVisible(true);
+    setIsFormVisible(false);
   };
 
   return (
@@ -154,7 +159,7 @@ const TaskPage = () => {
 
       {isFormVisible ? (
         <div className="panel">
-          <TaskForm initialValues={editingTask ?? undefined} onSubmit={handleFormSubmit} onCancel={() => setIsFormVisible(false)} />
+          <TaskForm initialValues={undefined} onSubmit={handleFormSubmit} onCancel={() => setIsFormVisible(false)} />
         </div>
       ) : null}
 
@@ -192,6 +197,15 @@ const TaskPage = () => {
               onDelete={() => handleDelete(task.id)}
               onStatusChange={(status) => handleUpdate(task.id, { status })}
               onEdit={() => handleEditStart(task)}
+              editForm={
+                editingTask?.id === task.id ? (
+                  <TaskForm
+                    initialValues={editingTask}
+                    onSubmit={handleFormSubmit}
+                    onCancel={() => setEditingTask(null)}
+                  />
+                ) : null
+              }
             />
           ))}
         </div>
