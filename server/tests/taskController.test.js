@@ -70,7 +70,7 @@ describe('TaskController', () => {
 		});
 
 		it('responds with 500 on unexpected errors', async () => {
-			const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+			const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
 			taskModel.getAll.mockRejectedValue(new Error('boom'));
 			const req = { query: {} };
 			const res = createResponse();
