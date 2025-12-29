@@ -67,6 +67,15 @@ docker run --name todo-postgres -e POSTGRES_DB=todo -e POSTGRES_USER=postgres -e
     docker compose down -v
     ```
 
+## Task schema
+
+-   `id`: serial primary key
+-   `title`: text, required
+-   `description`: text, nullable
+-   `status`: enum-like string `TODO | IN_PROGRESS | DONE`
+-   `deadline`: optional ISO 8601 datetime (stored as `timestamptz`); send `null` to clear it
+-   `created_at` / `updated_at`: timestamps managed by the API (update sets `updated_at`)
+
 ## Health check
 
 The API exposes a health check at `GET /api/health` returning `{ "status": "ok" }`.

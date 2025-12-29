@@ -131,6 +131,17 @@ describe('TaskController', () => {
 			expect(taskModel.create).not.toHaveBeenCalled();
 		});
 
+		it('rejects invalid deadline format', async () => {
+			const req = { body: { title: 'Title', deadline: '2025-01-01 10:00' } };
+			const res = createResponse();
+
+			await taskController.createTask(req, res);
+
+			expect(res.status).toHaveBeenCalledWith(400);
+			expect(res.json).toHaveBeenCalledWith({ error: 'Deadline must be an ISO datetime string' });
+			expect(taskModel.create).not.toHaveBeenCalled();
+		});
+
 		it('creates a task with valid payload', async () => {
 			const newTask = { id: 1, title: 'New', status: 'TODO' };
 			taskModel.create.mockResolvedValue(newTask);
@@ -139,7 +150,35 @@ describe('TaskController', () => {
 
 			await taskController.createTask(req, res);
 
-			expect(taskModel.create).toHaveBeenCalledWith({ title: 'New', description: 'desc', status: undefined });
+			expect(taskModel.create).toHaveBeenCalledWith({
+				title: 'New',
+				description: 'desc',
+				status: undefined,
+				deadline: undefined,
+			});
+			expect(res.status).toHaveBeenCalledWith(201);
+			expect(res.json).toHaveBeenCalledWith(newTask);
+		});
+
+		it('trims and forwards a valid ISO deadline', async () => {
+			const newTask = {
+				id: 2,
+				title: 'With deadline',
+				status: 'TODO',
+				deadline: '2025-02-01T10:00:00Z',
+			};
+			taskModel.create.mockResolvedValue(newTask);
+			const req = { body: { title: 'With deadline', deadline: ' 2025-02-01T10:00:00Z  ' } };
+			const res = createResponse();
+
+			await taskController.createTask(req, res);
+
+			expect(taskModel.create).toHaveBeenCalledWith({
+				title: 'With deadline',
+				description: undefined,
+				status: undefined,
+				deadline: '2025-02-01T10:00:00Z',
+			});
 			expect(res.status).toHaveBeenCalledWith(201);
 			expect(res.json).toHaveBeenCalledWith(newTask);
 		});
@@ -168,6 +207,17 @@ describe('TaskController', () => {
 			expect(taskModel.update).not.toHaveBeenCalled();
 		});
 
+		it('rejects invalid deadline when provided', async () => {
+			const req = { params: { id: '1' }, body: { deadline: '2025-01-01 10:00' } };
+			const res = createResponse();
+
+			await taskController.updateTask(req, res);
+
+			expect(res.status).toHaveBeenCalledWith(400);
+			expect(res.json).toHaveBeenCalledWith({ error: 'Deadline must be an ISO datetime string' });
+			expect(taskModel.update).not.toHaveBeenCalled();
+		});
+
 		it('returns 404 if the model returns nothing', async () => {
 			taskModel.update.mockResolvedValue(null);
 			const req = { params: { id: '9' }, body: { title: 'Updated' } };
@@ -191,6 +241,24 @@ describe('TaskController', () => {
 				title: 'Updated title',
 				description: undefined,
 				status: 'DONE',
+				deadline: undefined,
+			});
+			expect(res.json).toHaveBeenCalledWith(updatedTask);
+		});
+
+		it('clears the deadline when null or empty is provided', async () => {
+			const updatedTask = { id: 5, title: 'No deadline', deadline: null };
+			taskModel.update.mockResolvedValue(updatedTask);
+			const req = { params: { id: '5' }, body: { deadline: '   ' } };
+			const res = createResponse();
+
+			await taskController.updateTask(req, res);
+
+			expect(taskModel.update).toHaveBeenCalledWith('5', {
+				title: undefined,
+				description: undefined,
+				status: undefined,
+				deadline: null,
 			});
 			expect(res.json).toHaveBeenCalledWith(updatedTask);
 		});
