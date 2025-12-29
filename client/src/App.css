@@ -335,7 +335,7 @@
 }
 
 .task-form input[type='datetime-local']::-webkit-calendar-picker-indicator {
-  filter: invert(1);
+  filter: brightness(0) invert(1);
   opacity: 0.85;
 }
 
