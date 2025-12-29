@@ -78,7 +78,7 @@ paths:
 
     post:
       summary: Create a new task
-      description: Create a new task with the provided title, description, and status
+      description: Create a new task with the provided title, description, status, and optional deadline
       tags:
         - Tasks
       requestBody:
@@ -144,7 +144,7 @@ paths:
 
     put:
       summary: Update a task
-      description: Update an existing task with the provided fields
+      description: Update an existing task with the provided fields including optional deadline
       tags:
         - Tasks
       requestBody:
@@ -239,6 +239,12 @@ components:
           example: "Write comprehensive API documentation for the todo application"
         status:
           $ref: '#/components/schemas/TaskStatus'
+        deadline:
+          type: string
+          format: date-time
+          nullable: true
+          description: Optional deadline for the task
+          example: "2025-12-31T23:59:59.000Z"
         created_at:
           type: string
           format: date-time
@@ -265,6 +271,12 @@ components:
           example: "Write comprehensive API documentation for the todo application"
         status:
           $ref: '#/components/schemas/TaskStatus'
+        deadline:
+          type: string
+          format: date-time
+          nullable: true
+          description: Optional deadline for the task (ISO date-time string)
+          example: "2025-12-31T23:59:59.000Z"
 
     UpdateTaskRequest:
       type: object
@@ -279,6 +291,12 @@ components:
           example: "Write comprehensive API documentation for the todo application"
         status:
           $ref: '#/components/schemas/TaskStatus'
+        deadline:
+          type: string
+          format: date-time
+          nullable: true
+          description: Optional deadline for the task (ISO date-time string)
+          example: "2025-12-31T23:59:59.000Z"
 
     TasksResponse:
       type: object
