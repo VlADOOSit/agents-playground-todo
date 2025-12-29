@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import './TaskItem.css';
 
 const TaskItem = ({ task, onDelete, onUpdateStatus, onUpdateTask }) => {
   console.log('Task received in TaskItem:', task);

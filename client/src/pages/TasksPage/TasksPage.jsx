@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import TaskItem from '../components/TaskItem';
-import TaskForm from '../components/TaskForm';
-import TaskFilters from '../components/TaskFilters';
-import PaginationControls from '../components/PaginationControls';
-import tasksApi from '../api/tasks';
-import { TASKS_PER_PAGE } from '../utils/constant';
+import TaskItem from '../../components/TaskItem/TaskItem';
+import TaskForm from '../../components/TaskForm/TaskForm';
+import TaskFilters from '../../components/TaskFilters/TaskFilters';
+import PaginationControls from '../../components/PaginationControls/PaginationControls';
+import tasksApi from '../../api/tasks';
+import { TASKS_PER_PAGE } from '../../utils/constant';
+import './TasksPage.css';
 
 const TasksPage = () => {
   const [tasks, setTasks] = useState([]);
@@ -140,4 +141,3 @@ const TasksPage = () => {
 };
 
 export default TasksPage;
-
