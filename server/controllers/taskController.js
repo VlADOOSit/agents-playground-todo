@@ -60,7 +60,6 @@ class TaskController {
         const { id } = req.params;
         const updates = req.body;
 
-        // Validate deadline if provided
         if (updates.deadline && (typeof updates.deadline !== 'string' || isNaN(Date.parse(updates.deadline)))) {
             return res.status(400).json({ message: 'Invalid deadline format. Must be a valid ISO date string.' });
         }

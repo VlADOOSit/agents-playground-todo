@@ -1,18 +1,18 @@
 .task-item {
-  background-color: var(--secondary-bg); /* Revert background color */
-  padding: var(--spacing-lg); /* Re-add padding */
-  padding-left: calc(var(--spacing-lg) + 8px); /* Add space for status indicator */
-  border-radius: 8px; /* Re-add border-radius */
-  box-shadow: 0 2px 8px var(--shadow-light); /* Re-add box shadow */
+  background-color: var(--secondary-bg);
+  padding: var(--spacing-lg); 
+  padding-left: calc(var(--spacing-lg) + 8px);
+  border-radius: 8px; 
+  box-shadow: 0 2px 8px var(--shadow-light); 
   transition: transform 0.2s ease-in-out;
   display: flex;
   flex-direction: column;
   min-height: 80px;
   justify-content: space-between;
-  box-sizing: border-box; /* Ensure consistent width calculation */
+  box-sizing: border-box; 
   border: none;
-  width: 100%; /* Full width within container */
-  min-width: 100%; /* Ensure minimum width is 100% */
+  width: 100%; 
+  min-width: 100%; 
   position: relative;
   overflow: hidden;
 }
@@ -159,7 +159,6 @@
   color: var(--secondary-text);
 }
 
-/* Deadline status variants */
 .deadline-overdue {
   background-color: #fee;
   border-color: #dc3545;
@@ -246,7 +245,6 @@
   margin-bottom: 0;
 }
 
-/* Ensure edit form datetime inputs match the style */
 .task-edit-form input[type="datetime-local"] {
   margin-bottom: var(--spacing-sm);
 }
@@ -258,7 +256,6 @@
   margin-top: var(--spacing-md);
 }
 
-/* Responsive adjustments for TaskItem */
 @media (max-width: 600px) {
   .task-item-header {
     flex-direction: column;
