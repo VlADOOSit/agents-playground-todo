@@ -119,10 +119,25 @@
   font-size: 0.95rem;
 }
 
+.filter-row__filters {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-left: auto;
+  align-items: flex-end;
+}
+
 .filter-row__chips {
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
+}
+
+.sort-control {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.2rem 0;
 }
 
 .filter-chip {
@@ -170,6 +185,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .task-card__title {
@@ -227,6 +243,7 @@
   display: flex;
   align-items: center;
   gap: 0.6rem;
+  flex-wrap: wrap;
 }
 
 .task-card--overdue {
@@ -436,6 +453,32 @@
   }
 
   .filter-row {
+    align-items: flex-start;
+  }
+
+  .filter-row__filters {
+    margin-left: 0;
+    align-items: flex-start;
+  }
+
+  .task-card__header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .task-card__controls {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 0.5rem;
+  }
+
+  .task-card__controls .status-select,
+  .task-card__controls .icon-button {
+    min-width: 46%;
+  }
+
+  .task-card__footer {
+    flex-direction: column;
     align-items: flex-start;
   }
 }

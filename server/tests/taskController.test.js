@@ -32,6 +32,18 @@ describe('TaskController', () => {
 			expect(taskModel.getTotalCount).not.toHaveBeenCalled();
 		});
 
+		it('returns 400 for an invalid sort value', async () => {
+			const req = { query: { sort: 'DROP TABLE' } };
+			const res = createResponse();
+
+			await taskController.listTasks(req, res);
+
+			expect(res.status).toHaveBeenCalledWith(400);
+			expect(res.json).toHaveBeenCalledWith({ error: 'Invalid sort value' });
+			expect(taskModel.getAll).not.toHaveBeenCalled();
+			expect(taskModel.getTotalCount).not.toHaveBeenCalled();
+		});
+
 		it('returns paginated tasks with defaults', async () => {
 			const tasks = [{ id: 1, title: 'test' }];
 			taskModel.getAll.mockResolvedValue(tasks);
@@ -41,7 +53,7 @@ describe('TaskController', () => {
 
 			await taskController.listTasks(req, res);
 
-			expect(taskModel.getAll).toHaveBeenCalledWith({ limit: 5, offset: 0, status: undefined });
+			expect(taskModel.getAll).toHaveBeenCalledWith({ limit: 5, offset: 0, status: undefined, sort: 'createdAt' });
 			expect(taskModel.getTotalCount).toHaveBeenCalledWith(undefined);
 			expect(res.json).toHaveBeenCalledWith({
 				tasks,
@@ -59,7 +71,7 @@ describe('TaskController', () => {
 
 			await taskController.listTasks(req, res);
 
-			expect(taskModel.getAll).toHaveBeenCalledWith({ limit: 5, offset: 10, status: 'TODO' });
+			expect(taskModel.getAll).toHaveBeenCalledWith({ limit: 5, offset: 10, status: 'TODO', sort: 'createdAt' });
 			expect(taskModel.getTotalCount).toHaveBeenCalledWith('TODO');
 			expect(res.json).toHaveBeenCalledWith({
 				tasks: [],
@@ -67,6 +79,17 @@ describe('TaskController', () => {
 				totalPages: 1,
 				totalCount: 0,
 			});
+		});
+
+		it('passes the requested sort option through', async () => {
+			taskModel.getAll.mockResolvedValue([]);
+			taskModel.getTotalCount.mockResolvedValue(0);
+			const req = { query: { sort: 'deadline' } };
+			const res = createResponse();
+
+			await taskController.listTasks(req, res);
+
+			expect(taskModel.getAll).toHaveBeenCalledWith({ limit: 5, offset: 0, status: undefined, sort: 'deadline' });
 		});
 
 		it('responds with 500 on unexpected errors', async () => {

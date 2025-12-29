@@ -1,9 +1,13 @@
 const pool = require('../db/pool');
 
 class TaskModel {
-	async getAll({ limit, offset, status }) {
+	async getAll({ limit, offset, status, sort }) {
 		const values = [limit, offset];
 		let whereClause = '';
+		const orderBy =
+			sort === 'deadline'
+				? 'ORDER BY deadline IS NULL ASC, deadline ASC, created_at DESC'
+				: 'ORDER BY created_at DESC';
 
 		if (status) {
 			values.push(status);
@@ -14,7 +18,7 @@ class TaskModel {
 			`SELECT id, title, description, status, deadline, created_at, updated_at
 			FROM tasks
 			${whereClause}
-			ORDER BY created_at DESC
+			${orderBy}
 			LIMIT $1 OFFSET $2`,
 			values
 		);
