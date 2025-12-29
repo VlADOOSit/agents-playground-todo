@@ -12,6 +12,7 @@ The `openapi.yaml` file contains the complete OpenAPI 3.0 specification for the 
 ### Features Documented
 
 -   **Task CRUD Operations**: Create, read, update, and delete tasks
+-   **Deadline Management**: Set and track task deadlines with overdue indicators
 -   **Pagination**: Support for paginated task listings
 -   **Filtering**: Filter tasks by status (TODO, IN_PROGRESS, DONE)
 -   **Data Validation**: Proper request/response schemas with examples
@@ -25,6 +26,7 @@ Each task contains:
 -   `title`: Task title (required, string)
 -   `description`: Task description (optional, string)
 -   `status`: Task status (enum: TODO, IN_PROGRESS, DONE)
+-   `deadline`: Task deadline (optional, ISO date-time string)
 -   `created_at`: Creation timestamp
 -   `updated_at`: Last update timestamp
 
@@ -57,5 +59,5 @@ curl "http://localhost:3001/api/tasks?status=TODO"
 # Create a new task
 curl -X POST http://localhost:3001/api/tasks \
   -H "Content-Type: application/json" \
-  -d '{"title": "New Task", "description": "Task description", "status": "TODO"}'
+  -d '{"title": "New Task", "description": "Task description", "status": "TODO", "deadline": "2025-12-31T23:59:59.000Z"}'
 ```

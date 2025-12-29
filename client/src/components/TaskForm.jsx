@@ -5,6 +5,7 @@ const TaskForm = ({ onTaskCreated }) => {
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDescription, setNewTaskDescription] = useState('');
   const [newTaskStatus, setNewTaskStatus] = useState('TODO');
+  const [newTaskDeadline, setNewTaskDeadline] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -18,11 +19,13 @@ const TaskForm = ({ onTaskCreated }) => {
         title: newTaskTitle,
         description: newTaskDescription,
         status: newTaskStatus,
+        deadline: newTaskDeadline || null,
       });
       onTaskCreated(newTask);
       setNewTaskTitle('');
       setNewTaskDescription('');
       setNewTaskStatus('TODO');
+      setNewTaskDeadline('');
       setIsExpanded(false);
     } catch (error) {
       console.error('Error creating task:', error);
@@ -71,6 +74,13 @@ const TaskForm = ({ onTaskCreated }) => {
             <option value="IN_PROGRESS">IN_PROGRESS</option>
             <option value="DONE">DONE</option>
           </select>
+          <input
+            type="datetime-local"
+            placeholder="Deadline (optional)"
+            value={newTaskDeadline}
+            onChange={(e) => setNewTaskDeadline(e.target.value)}
+            disabled={isSubmitting}
+          />
           <div className="form-actions">
             <button type="submit" disabled={isSubmitting}>
               {isSubmitting ? 'Adding...' : 'Add Task'}

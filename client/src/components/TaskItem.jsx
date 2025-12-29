@@ -7,6 +7,7 @@ const TaskItem = ({ task, onDelete, onUpdateStatus, onUpdateTask }) => {
   const [editedTitle, setEditedTitle] = useState(task.title);
   const [editedDescription, setEditedDescription] = useState(task.description);
   const [editedStatus, setEditedStatus] = useState(task.status);
+  const [editedDeadline, setEditedDeadline] = useState(task.deadline ? new Date(task.deadline).toISOString().slice(0, 16) : '');
 
   const handleDelete = () => {
     onDelete(task.id);
@@ -22,7 +23,12 @@ const TaskItem = ({ task, onDelete, onUpdateStatus, onUpdateTask }) => {
   };
 
   const handleSaveEdit = () => {
-    onUpdateTask(task.id, { title: editedTitle, description: editedDescription, status: editedStatus });
+    onUpdateTask(task.id, {
+      title: editedTitle,
+      description: editedDescription,
+      status: editedStatus,
+      deadline: editedDeadline || null
+    });
     setIsEditing(false);
   };
 
@@ -31,6 +37,7 @@ const TaskItem = ({ task, onDelete, onUpdateStatus, onUpdateTask }) => {
     setEditedTitle(task.title);
     setEditedDescription(task.description);
     setEditedStatus(task.status);
+    setEditedDeadline(task.deadline ? new Date(task.deadline).toISOString().slice(0, 16) : '');
   };
 
   const formatDateTime = (dateString) => {
@@ -56,8 +63,27 @@ const TaskItem = ({ task, onDelete, onUpdateStatus, onUpdateTask }) => {
     }
   };
 
+  const isOverdue = () => {
+    if (!task.deadline || task.status === 'DONE') return false;
+    return new Date(task.deadline) < new Date();
+  };
+
+  const getDeadlineStatus = () => {
+    if (!task.deadline) return null;
+    if (task.status === 'DONE') return 'completed';
+    const now = new Date();
+    const deadline = new Date(task.deadline);
+    const timeDiff = deadline - now;
+    const hoursDiff = timeDiff / (1000 * 60 * 60);
+
+    if (timeDiff < 0) return 'overdue';
+    if (hoursDiff <= 24) return 'urgent';
+    if (hoursDiff <= 72) return 'warning';
+    return 'normal';
+  };
+
   return (
-    <div className={`task-item ${getStatusClass(task.status)}`}>
+    <div className={`task-item ${getStatusClass(task.status)} ${isOverdue() ? 'overdue' : ''}`}>
       <div className="task-item-header">
         <h3>{task.title}</h3>
         <div className="task-item-actions">
@@ -90,6 +116,12 @@ const TaskItem = ({ task, onDelete, onUpdateStatus, onUpdateTask }) => {
                 <option value="IN_PROGRESS">IN_PROGRESS</option>
                 <option value="DONE">DONE</option>
               </select>
+              <input
+                type="datetime-local"
+                value={editedDeadline}
+                onChange={(e) => setEditedDeadline(e.target.value)}
+                placeholder="Deadline (optional)"
+              />
               <div className="edit-form-actions">
                 <button onClick={handleSaveEdit}>Save</button>
                 <button onClick={handleCancelEdit} className="secondary">Cancel</button>
@@ -108,6 +140,20 @@ const TaskItem = ({ task, onDelete, onUpdateStatus, onUpdateTask }) => {
               </p>
           <p><strong>Created At:</strong> {formatDateTime(task.created_at)}</p>
           <p><strong>Updated At:</strong> {formatDateTime(task.updated_at)}</p>
+          {task.deadline && (
+            <div className={`deadline-badge deadline-${getDeadlineStatus()}`}>
+              <span className="deadline-icon">⏰</span>
+              <span className="deadline-text">
+                <strong>Deadline:</strong> {formatDateTime(task.deadline)}
+              </span>
+            </div>
+          )}
+          {!task.deadline && (
+            <div className="deadline-badge deadline-none">
+              <span className="deadline-icon">📅</span>
+              <span className="deadline-text">No deadline set</span>
+            </div>
+          )}
             </>
           )}
         </div>

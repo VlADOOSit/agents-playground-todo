@@ -21,14 +21,16 @@ describe('TaskController', () => {
                 id: 1,
                 title: 'Test Task',
                 description: 'Test Description',
-                status: 'pending'
+                status: 'pending',
+                deadline: '2025-12-31T23:59:59Z'
             };
 
             mockReq = {
                 body: {
                     title: 'Test Task',
                     description: 'Test Description',
-                    status: 'pending'
+                    status: 'pending',
+                    deadline: '2025-12-31T23:59:59Z'
                 }
             };
 
@@ -36,7 +38,7 @@ describe('TaskController', () => {
 
             await TaskController.createTask(mockReq, mockRes);
 
-            expect(TaskModel.createTask).toHaveBeenCalledWith('Test Task', 'Test Description', 'pending');
+            expect(TaskModel.createTask).toHaveBeenCalledWith('Test Task', 'Test Description', 'pending', '2025-12-31T23:59:59Z');
             expect(mockRes.status).toHaveBeenCalledWith(201);
             expect(mockRes.json).toHaveBeenCalledWith(newTask);
         });
@@ -46,7 +48,8 @@ describe('TaskController', () => {
                 body: {
                     title: 'Test Task',
                     description: 'Test Description',
-                    status: 'pending'
+                    status: 'pending',
+                    deadline: null
                 }
             };
 
@@ -57,6 +60,22 @@ describe('TaskController', () => {
 
             expect(mockRes.status).toHaveBeenCalledWith(500);
             expect(mockRes.json).toHaveBeenCalledWith({ message: 'Error creating task' });
+        });
+
+        test('should return 400 for invalid deadline format', async () => {
+            mockReq = {
+                body: {
+                    title: 'Test Task',
+                    description: 'Test Description',
+                    status: 'pending',
+                    deadline: 'invalid-date'
+                }
+            };
+
+            await TaskController.createTask(mockReq, mockRes);
+
+            expect(mockRes.status).toHaveBeenCalledWith(400);
+            expect(mockRes.json).toHaveBeenCalledWith({ message: 'Invalid deadline format. Must be a valid ISO date string.' });
         });
     });
 
@@ -218,7 +237,8 @@ describe('TaskController', () => {
                 params: { id: '1' },
                 body: {
                     title: 'Updated Task',
-                    status: 'completed'
+                    status: 'completed',
+                    deadline: '2025-12-31T23:59:59Z'
                 }
             };
 
@@ -226,7 +246,8 @@ describe('TaskController', () => {
                 id: 1,
                 title: 'Updated Task',
                 description: 'Test Description',
-                status: 'completed'
+                status: 'completed',
+                deadline: '2025-12-31T23:59:59Z'
             };
 
             TaskModel.updateTask.mockResolvedValue(updatedTask);
@@ -235,7 +256,8 @@ describe('TaskController', () => {
 
             expect(TaskModel.updateTask).toHaveBeenCalledWith('1', {
                 title: 'Updated Task',
-                status: 'completed'
+                status: 'completed',
+                deadline: '2025-12-31T23:59:59Z'
             });
             expect(mockRes.status).toHaveBeenCalledWith(200);
             expect(mockRes.json).toHaveBeenCalledWith(updatedTask);
@@ -244,14 +266,14 @@ describe('TaskController', () => {
         test('should return 404 when task not found for update', async () => {
             mockReq = {
                 params: { id: '999' },
-                body: { title: 'Updated Task' }
+                body: { title: 'Updated Task', deadline: null }
             };
 
             TaskModel.updateTask.mockResolvedValue(null);
 
             await TaskController.updateTask(mockReq, mockRes);
 
-            expect(TaskModel.updateTask).toHaveBeenCalledWith('999', { title: 'Updated Task' });
+            expect(TaskModel.updateTask).toHaveBeenCalledWith('999', { title: 'Updated Task', deadline: null });
             expect(mockRes.status).toHaveBeenCalledWith(404);
             expect(mockRes.json).toHaveBeenCalledWith({ message: 'Task not found' });
         });
@@ -259,7 +281,7 @@ describe('TaskController', () => {
         test('should handle errors and return 500 status', async () => {
             mockReq = {
                 params: { id: '1' },
-                body: { title: 'Updated Task' }
+                body: { title: 'Updated Task', deadline: '2025-12-31T23:59:59Z' }
             };
 
             const error = new Error('Database error');
@@ -269,6 +291,21 @@ describe('TaskController', () => {
 
             expect(mockRes.status).toHaveBeenCalledWith(500);
             expect(mockRes.json).toHaveBeenCalledWith({ message: 'Error updating task' });
+        });
+
+        test('should return 400 for invalid deadline format in update', async () => {
+            mockReq = {
+                params: { id: '1' },
+                body: {
+                    title: 'Updated Task',
+                    deadline: 'invalid-date-format'
+                }
+            };
+
+            await TaskController.updateTask(mockReq, mockRes);
+
+            expect(mockRes.status).toHaveBeenCalledWith(400);
+            expect(mockRes.json).toHaveBeenCalledWith({ message: 'Invalid deadline format. Must be a valid ISO date string.' });
         });
     });
 

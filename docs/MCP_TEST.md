@@ -27,6 +27,7 @@ The `tasks` table has the following fields:
 -   `title`: TEXT NOT NULL
 -   `description`: TEXT
 -   `status`: task_status NOT NULL DEFAULT 'TODO' (Enum: 'TODO', 'IN_PROGRESS', 'DONE')
+-   `deadline`: TIMESTAMPTZ (nullable)
 -   `created_at`: TIMESTAMPTZ NOT NULL DEFAULT NOW()
 -   `updated_at`: TIMESTAMPTZ NOT NULL DEFAULT NOW()
 

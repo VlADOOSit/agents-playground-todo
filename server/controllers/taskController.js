@@ -3,9 +3,14 @@ const { TASKS_PER_PAGE } = require('../utils/constant');
 
 class TaskController {
     async createTask(req, res) {
-        const { title, description, status } = req.body;
+        const { title, description, status, deadline } = req.body;
+
+        if (deadline && (typeof deadline !== 'string' || isNaN(Date.parse(deadline)))) {
+            return res.status(400).json({ message: 'Invalid deadline format. Must be a valid ISO date string.' });
+        }
+
         try {
-            const newTask = await TaskModel.createTask(title, description, status);
+            const newTask = await TaskModel.createTask(title, description, status, deadline);
             res.status(201).json(newTask);
         } catch (error) {
             console.error('Error creating task:', error);
@@ -54,6 +59,12 @@ class TaskController {
     async updateTask(req, res) {
         const { id } = req.params;
         const updates = req.body;
+
+        // Validate deadline if provided
+        if (updates.deadline && (typeof updates.deadline !== 'string' || isNaN(Date.parse(updates.deadline)))) {
+            return res.status(400).json({ message: 'Invalid deadline format. Must be a valid ISO date string.' });
+        }
+
         try {
             const updatedTask = await TaskModel.updateTask(id, updates);
             if (!updatedTask) {

@@ -15,6 +15,7 @@ describe('TaskModel', () => {
                 title: 'Test Task',
                 description: 'Test Description',
                 status: 'pending',
+                deadline: '2025-12-31T23:59:59Z',
                 created_at: '2025-12-26T10:00:00Z',
                 updated_at: '2025-12-26T10:00:00Z'
             };
@@ -23,11 +24,11 @@ describe('TaskModel', () => {
                 rows: [mockTask]
             });
 
-            const result = await TaskModel.createTask('Test Task', 'Test Description', 'pending');
+            const result = await TaskModel.createTask('Test Task', 'Test Description', 'pending', '2025-12-31T23:59:59Z');
 
             expect(pool.query).toHaveBeenCalledWith(
-                'INSERT INTO tasks (title, description, status) VALUES ($1, $2, $3) RETURNING id, title, description, status, created_at, updated_at;',
-                ['Test Task', 'Test Description', 'pending']
+                'INSERT INTO tasks (title, description, status, deadline) VALUES ($1, $2, $3, $4) RETURNING id, title, description, status, deadline, created_at, updated_at;',
+                ['Test Task', 'Test Description', 'pending', '2025-12-31T23:59:59Z']
             );
             expect(result).toEqual(mockTask);
         });
@@ -36,7 +37,7 @@ describe('TaskModel', () => {
             const error = new Error('Database connection failed');
             pool.query.mockRejectedValue(error);
 
-            await expect(TaskModel.createTask('Test Task', 'Test Description', 'pending'))
+            await expect(TaskModel.createTask('Test Task', 'Test Description', 'pending', null))
                 .rejects.toThrow('Database connection failed');
         });
     });
@@ -56,7 +57,7 @@ describe('TaskModel', () => {
 
             expect(pool.query).toHaveBeenCalledWith(
                 'SELECT * FROM tasks ORDER BY created_at DESC LIMIT $1 OFFSET $2;',
-                [5, 0] // TASKS_PER_PAGE = 5, offset = 0 for page 1
+                [5, 0]
             );
             expect(result).toEqual(mockTasks);
         });
@@ -72,7 +73,7 @@ describe('TaskModel', () => {
 
             expect(pool.query).toHaveBeenCalledWith(
                 'SELECT * FROM tasks ORDER BY created_at DESC LIMIT $1 OFFSET $2;',
-                [10, 10] // limit = 10, offset = (page-1) * limit = 10
+                [10, 10]
             );
             expect(result).toEqual(mockTasks);
         });
@@ -214,6 +215,7 @@ describe('TaskModel', () => {
                 title: 'Updated Task',
                 description: 'Test Description',
                 status: 'pending',
+                deadline: null,
                 created_at: '2025-12-26T10:00:00Z',
                 updated_at: '2025-12-26T11:00:00Z'
             };
@@ -225,7 +227,7 @@ describe('TaskModel', () => {
             const result = await TaskModel.updateTask(1, { title: 'Updated Task' });
 
             expect(pool.query).toHaveBeenCalledWith(
-                'UPDATE tasks SET title = $1 WHERE id = $2 RETURNING id, title, description, status, created_at, updated_at;',
+                'UPDATE tasks SET title = $1 WHERE id = $2 RETURNING id, title, description, status, deadline, created_at, updated_at;',
                 ['Updated Task', 1]
             );
             expect(result).toEqual(mockUpdatedTask);
@@ -237,6 +239,7 @@ describe('TaskModel', () => {
                 title: 'Updated Task',
                 description: 'Updated Description',
                 status: 'completed',
+                deadline: '2025-12-31T23:59:59Z',
                 created_at: '2025-12-26T10:00:00Z',
                 updated_at: '2025-12-26T11:00:00Z'
             };
@@ -248,14 +251,15 @@ describe('TaskModel', () => {
             const updates = {
                 title: 'Updated Task',
                 description: 'Updated Description',
-                status: 'completed'
+                status: 'completed',
+                deadline: '2025-12-31T23:59:59Z'
             };
 
             const result = await TaskModel.updateTask(1, updates);
 
             expect(pool.query).toHaveBeenCalledWith(
-                'UPDATE tasks SET title = $1, description = $2, status = $3 WHERE id = $4 RETURNING id, title, description, status, created_at, updated_at;',
-                ['Updated Task', 'Updated Description', 'completed', 1]
+                'UPDATE tasks SET title = $1, description = $2, status = $3, deadline = $4 WHERE id = $5 RETURNING id, title, description, status, deadline, created_at, updated_at;',
+                ['Updated Task', 'Updated Description', 'completed', '2025-12-31T23:59:59Z', 1]
             );
             expect(result).toEqual(mockUpdatedTask);
         });

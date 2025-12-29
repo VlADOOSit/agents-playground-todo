@@ -2,10 +2,10 @@ const pool = require('../db/pool');
 const { TASKS_PER_PAGE } = require('../utils/constant');
 
 class TaskModel {
-    async createTask(title, description, status) {
+    async createTask(title, description, status, deadline = null) {
         const result = await pool.query(
-            'INSERT INTO tasks (title, description, status) VALUES ($1, $2, $3) RETURNING id, title, description, status, created_at, updated_at;',
-            [title, description, status]
+            'INSERT INTO tasks (title, description, status, deadline) VALUES ($1, $2, $3, $4) RETURNING id, title, description, status, deadline, created_at, updated_at;',
+            [title, description, status, deadline]
         );
         return result.rows[0];
     }
@@ -65,7 +65,7 @@ class TaskModel {
 
         queryValues.push(id);
 
-        const query = `UPDATE tasks SET ${setClauses.join(', ')} WHERE id = $${paramIndex} RETURNING id, title, description, status, created_at, updated_at;`;
+        const query = `UPDATE tasks SET ${setClauses.join(', ')} WHERE id = $${paramIndex} RETURNING id, title, description, status, deadline, created_at, updated_at;`;
 
         const result = await pool.query(query, queryValues);
         return result.rows[0];
