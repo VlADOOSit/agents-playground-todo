@@ -182,10 +182,56 @@
   font-size: 0.9rem;
 }
 
+.task-card__deadline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.5rem 0 0;
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.task-card__deadline::before {
+  content: '⏰';
+  font-size: 0.9rem;
+}
+
+.task-card__deadline--neutral {
+  background: rgba(59, 130, 246, 0.14);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  color: #bfdbfe;
+}
+
+.task-card__deadline--upcoming {
+  background: rgba(168, 85, 247, 0.16);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  color: #e9d5ff;
+}
+
+.task-card__deadline--urgent {
+  background: rgba(245, 158, 11, 0.18);
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  color: #fde68a;
+}
+
+.task-card__deadline--overdue {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  color: #fca5a5;
+}
+
 .task-card__controls {
   display: flex;
   align-items: center;
   gap: 0.6rem;
+}
+
+.task-card--overdue {
+  border-color: rgba(239, 68, 68, 0.6);
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.2);
 }
 
 .status-pill {
@@ -195,6 +241,18 @@
   font-weight: 700;
   font-size: 0.85rem;
   text-transform: capitalize;
+}
+
+.overdue-pill {
+  padding: 0.3rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .status-select {
@@ -270,6 +328,15 @@
   color: var(--text);
   padding: 0.75rem 0.85rem;
   font-size: 1rem;
+}
+
+.task-form input[type='datetime-local'] {
+  color-scheme: dark;
+}
+
+.task-form input[type='datetime-local']::-webkit-calendar-picker-indicator {
+  filter: brightness(0) invert(1);
+  opacity: 0.85;
 }
 
 .task-form textarea {

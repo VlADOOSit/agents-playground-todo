@@ -6,20 +6,47 @@ const STATUS_OPTIONS = [
   { value: 'DONE', label: 'Done' },
 ];
 
+const formatDeadlineValue = (value) => {
+  const parsed = value ? new Date(value) : null;
+  if (!parsed || Number.isNaN(parsed.getTime())) {
+    return '';
+  }
+
+  const pad = (part) => String(part).padStart(2, '0');
+  const year = parsed.getFullYear();
+  const month = pad(parsed.getMonth() + 1);
+  const day = pad(parsed.getDate());
+  const hours = pad(parsed.getHours());
+  const minutes = pad(parsed.getMinutes());
+
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
 const TaskForm = ({ initialValues, onSubmit, onCancel }) => {
   const [title, setTitle] = useState(initialValues?.title ?? '');
   const [description, setDescription] = useState(initialValues?.description ?? '');
   const [status, setStatus] = useState(initialValues?.status ?? 'TODO');
+  const [deadline, setDeadline] = useState(formatDeadlineValue(initialValues?.deadline));
 
   useEffect(() => {
     setTitle(initialValues?.title ?? '');
     setDescription(initialValues?.description ?? '');
     setStatus(initialValues?.status ?? 'TODO');
+    setDeadline(formatDeadlineValue(initialValues?.deadline));
   }, [initialValues]);
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    onSubmit({ title: title.trim(), description: description.trim(), status });
+    const trimmedDeadline = deadline.trim();
+    const deadlineValue = trimmedDeadline ? new Date(trimmedDeadline) : null;
+    const deadlinePayload = deadlineValue && !Number.isNaN(deadlineValue.getTime()) ? deadlineValue.toISOString() : null;
+
+    onSubmit({
+      title: title.trim(),
+      description: description.trim(),
+      status,
+      deadline: deadlinePayload,
+    });
   };
 
   return (
@@ -62,6 +89,17 @@ const TaskForm = ({ initialValues, onSubmit, onCancel }) => {
             </option>
           ))}
         </select>
+      </div>
+
+      <div className="task-form__row">
+        <label htmlFor="deadline">Deadline</label>
+        <input
+          id="deadline"
+          name="deadline"
+          type="datetime-local"
+          value={deadline}
+          onChange={(event) => setDeadline(event.target.value)}
+        />
       </div>
 
       <div className="task-form__actions">
