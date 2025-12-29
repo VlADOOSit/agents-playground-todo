@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createTask, deleteTask, getTasks, updateTask } from '../api/tasks';
 import TaskCard from '../components/TaskCard';
 import TaskForm from '../components/TaskForm';
@@ -14,6 +14,7 @@ const TaskPage = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const formRef = useRef(null);
   const filters = [
     { value: 'ALL', label: 'All' },
     { value: 'TODO', label: 'Todo' },
@@ -58,6 +59,14 @@ const TaskPage = () => {
     loadTasks(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeFilter]);
+
+  useEffect(() => {
+    if (!isFormVisible || !formRef.current) {
+      return;
+    }
+
+    formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [isFormVisible, editingTask]);
 
   const toggleExpand = (taskId) => {
     setExpandedIds((prev) => {
@@ -153,7 +162,7 @@ const TaskPage = () => {
       </div>
 
       {isFormVisible ? (
-        <div className="panel">
+        <div className="panel" ref={formRef}>
           <TaskForm initialValues={editingTask ?? undefined} onSubmit={handleFormSubmit} onCancel={() => setIsFormVisible(false)} />
         </div>
       ) : null}
