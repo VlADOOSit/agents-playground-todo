@@ -32,7 +32,29 @@ const TaskCard = ({
     const parsed = new Date(task.deadline);
     return Number.isNaN(parsed.getTime()) ? null : parsed;
   }, [task.deadline]);
-  const isOverdue = Boolean(deadlineDate && deadlineDate.getTime() < Date.now() && task.status !== 'DONE');
+  const deadlineMeta = useMemo(() => {
+    if (!deadlineDate || task.status === 'DONE') {
+      return { isOverdue: false, className: 'task-card__deadline--neutral' };
+    }
+
+    const now = Date.now();
+    const timeDiff = deadlineDate.getTime() - now;
+    if (timeDiff < 0) {
+      return { isOverdue: true, className: 'task-card__deadline--overdue' };
+    }
+
+    const hoursRemaining = timeDiff / (1000 * 60 * 60);
+    if (hoursRemaining <= 24) {
+      return { isOverdue: false, className: 'task-card__deadline--urgent' };
+    }
+
+    if (hoursRemaining <= 72) {
+      return { isOverdue: false, className: 'task-card__deadline--upcoming' };
+    }
+
+    return { isOverdue: false, className: 'task-card__deadline--neutral' };
+  }, [deadlineDate, task.status]);
+  const isOverdue = deadlineMeta.isOverdue;
 
   return (
     <article className={`task-card ${expanded ? 'task-card--expanded' : ''} ${isOverdue ? 'task-card--overdue' : ''}`}>
@@ -40,7 +62,7 @@ const TaskCard = ({
         <div>
           <p className="task-card__meta">Task #{task.id}</p>
           <h3 className="task-card__title">{task.title}</h3>
-          <p className="task-card__deadline">Deadline: {formatDate(task.deadline)}</p>
+          <p className={`task-card__deadline ${deadlineMeta.className}`}>Deadline: {formatDate(task.deadline)}</p>
         </div>
 
         <div className="task-card__controls">
