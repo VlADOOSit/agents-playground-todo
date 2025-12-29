@@ -183,8 +183,22 @@
 }
 
 .task-card__deadline {
-  margin: 0.35rem 0 0;
-  color: #f8d7da;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.5rem 0 0;
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.14);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  color: #bfdbfe;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.task-card__deadline::before {
+  content: '⏰';
   font-size: 0.9rem;
 }
 
