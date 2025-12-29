@@ -126,6 +126,15 @@
   background-color: #28a745; /* Green for DONE */
 }
 
+.task-item.overdue {
+  border: 2px solid #dc3545; /* Red border for overdue tasks */
+}
+
+.task-item.overdue::before {
+  background-color: #dc3545; /* Red indicator for overdue */
+  opacity: 1; /* Always visible for overdue tasks */
+}
+
 .task-item:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px var(--shadow-medium); /* Re-add box shadow on hover */
@@ -213,6 +222,11 @@
 .task-edit-form textarea,
 .task-edit-form select {
   margin-bottom: 0;
+}
+
+/* Ensure edit form datetime inputs match the style */
+.task-edit-form input[type="datetime-local"] {
+  margin-bottom: var(--spacing-sm);
 }
 
 .edit-form-actions {
