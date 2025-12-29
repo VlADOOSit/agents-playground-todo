@@ -330,6 +330,15 @@
   font-size: 1rem;
 }
 
+.task-form input[type='datetime-local'] {
+  color-scheme: dark;
+}
+
+.task-form input[type='datetime-local']::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.85;
+}
+
 .task-form textarea {
   resize: vertical;
 }
