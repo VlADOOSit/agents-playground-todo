@@ -1,6 +1,7 @@
 const taskModel = require('../models/taskModel');
 
 const VALID_STATUSES = new Set(['TODO', 'IN_PROGRESS', 'DONE']);
+const VALID_SORTS = new Set(['createdAt', 'deadline']);
 const isValidDeadline = (deadline) => {
 	if (deadline === undefined) {
 		return true;
@@ -52,13 +53,20 @@ class TaskController {
 			const limit = 5;
 			const offset = (page - 1) * limit;
 			const status = req.query.status;
+			const sortParam = req.query.sort;
+
+			if (sortParam !== undefined && !VALID_SORTS.has(sortParam)) {
+				return res.status(400).json({ error: 'Invalid sort value' });
+			}
+
+			const sort = sortParam || 'createdAt';
 
 			if (status && !VALID_STATUSES.has(status)) {
 				return res.status(400).json({ error: 'Invalid status value' });
 			}
 
 			const [tasks, totalCount] = await Promise.all([
-				taskModel.getAll({ limit, offset, status }),
+				taskModel.getAll({ limit, offset, status, sort }),
 				taskModel.getTotalCount(status),
 			]);
 			const totalPages = Math.max(1, Math.ceil(totalCount / limit));

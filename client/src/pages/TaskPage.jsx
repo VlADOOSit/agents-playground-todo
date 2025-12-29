@@ -14,6 +14,7 @@ const TaskPage = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [sort, setSort] = useState('createdAt');
   const filters = [
     { value: 'ALL', label: 'All' },
     { value: 'TODO', label: 'Todo' },
@@ -21,21 +22,43 @@ const TaskPage = () => {
     { value: 'DONE', label: 'Done' },
   ];
 
-  const dateValue = (value) => {
+  const parseDate = (value) => {
     const parsed = value ? new Date(value) : null;
-    return parsed && !Number.isNaN(parsed.getTime()) ? parsed.getTime() : 0;
+    return parsed && !Number.isNaN(parsed.getTime()) ? parsed : null;
   };
 
   const sortedTasks = useMemo(() => {
-    return [...tasks].sort((a, b) => dateValue(b.created_at ?? b.createdAt) - dateValue(a.created_at ?? a.createdAt));
-  }, [tasks]);
+    const createdTime = (task) => {
+      const created = parseDate(task.created_at ?? task.createdAt);
+      return created ? created.getTime() : 0;
+    };
+
+    if (sort === 'deadline') {
+      return [...tasks].sort((a, b) => {
+        const aDeadline = parseDate(a.deadline);
+        const bDeadline = parseDate(b.deadline);
+
+        if (aDeadline && bDeadline) {
+          const diff = aDeadline.getTime() - bDeadline.getTime();
+          return diff !== 0 ? diff : createdTime(b) - createdTime(a);
+        }
+
+        if (aDeadline) return -1;
+        if (bDeadline) return 1;
+
+        return createdTime(b) - createdTime(a);
+      });
+    }
+
+    return [...tasks].sort((a, b) => createdTime(b) - createdTime(a));
+  }, [tasks, sort]);
 
   const loadTasks = async (nextPage) => {
     const requestedPage = nextPage ?? page;
     try {
       setLoading(true);
       const status = activeFilter === 'ALL' ? undefined : activeFilter;
-      const data = await getTasks({ page: requestedPage, status });
+      const data = await getTasks({ page: requestedPage, status, sort });
 
       if (data.totalPages < requestedPage && requestedPage > 1) {
         await loadTasks(data.totalPages);
@@ -57,7 +80,7 @@ const TaskPage = () => {
   useEffect(() => {
     loadTasks(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeFilter]);
+  }, [activeFilter, sort]);
 
   const toggleExpand = (taskId) => {
     setExpandedIds((prev) => {
@@ -165,18 +188,35 @@ const TaskPage = () => {
 
       <div className="panel">
         <div className="filter-row">
-          <span className="filter-row__label">Filter by status</span>
-          <div className="filter-row__chips">
-            {filters.map((filter) => (
-              <button
-                key={filter.value}
-                className={`filter-chip ${activeFilter === filter.value ? 'filter-chip--active' : ''}`}
-                type="button"
-                onClick={() => setActiveFilter(filter.value)}
-              >
-                {filter.label}
-              </button>
-            ))}
+          <div className="sort-control">
+            <label className="filter-row__label" htmlFor="sort">
+              Sort by
+            </label>
+            <select
+              id="sort"
+              className="status-select"
+              value={sort}
+              onChange={(e) => {
+                setSort(e.target.value);
+              }}
+            >
+              <option value="createdAt">Created date</option>
+              <option value="deadline">Deadline</option>
+            </select>
+          </div>
+          <div className="filter-row__filters">
+            <div className="filter-row__chips">
+              {filters.map((filter) => (
+                <button
+                  key={filter.value}
+                  className={`filter-chip ${activeFilter === filter.value ? 'filter-chip--active' : ''}`}
+                  type="button"
+                  onClick={() => setActiveFilter(filter.value)}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
         {loading ? <p className="muted">Loading tasks...</p> : null}

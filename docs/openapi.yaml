@@ -40,6 +40,15 @@ paths:
           schema:
             $ref: '#/components/schemas/TaskStatus'
           description: Optional filter by task status.
+        - in: query
+          name: sort
+          schema:
+            type: string
+            enum: [createdAt, deadline]
+            default: createdAt
+          description: >
+            Optional sort order. `createdAt` shows newest tasks first. `deadline` shows tasks with a deadline first
+            (nearest deadline first) and tasks without deadlines last.
       responses:
         '200':
           description: Paginated list of tasks.
