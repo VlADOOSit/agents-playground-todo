@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import './TaskCard.css';
 
 const STATUS_COLORS = {
   TODO: '#8a8f98',
@@ -9,21 +10,13 @@ const STATUS_COLORS = {
 const formatDate = (value) => {
   const parsed = value ? new Date(value) : null;
   if (!parsed || Number.isNaN(parsed.getTime())) {
-    return '—';
+    return 'N/A';
   }
 
   return parsed.toLocaleString();
 };
 
-const TaskCard = ({
-  task,
-  expanded,
-  onToggleExpand,
-  onDelete,
-  onStatusChange,
-  onEdit,
-  editForm,
-}) => {
+const TaskCard = ({ task, expanded, onToggleExpand, onDelete, onStatusChange, onEdit, editForm }) => {
   const statusColor = useMemo(() => STATUS_COLORS[task.status] ?? '#8a8f98', [task.status]);
   const deadlineDate = useMemo(() => {
     if (!task.deadline) {

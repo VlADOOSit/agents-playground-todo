@@ -1,0 +1,45 @@
+.task-form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.task-form__row {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.task-form label {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.task-form input,
+.task-form textarea,
+.task-form select {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  padding: 0.75rem 0.85rem;
+  font-size: 1rem;
+}
+
+.task-form input[type='datetime-local'] {
+  color-scheme: dark;
+}
+
+.task-form input[type='datetime-local']::-webkit-calendar-picker-indicator {
+  filter: brightness(0) invert(1);
+  opacity: 0.85;
+}
+
+.task-form textarea {
+  resize: vertical;
+}
+
+.task-form__actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}

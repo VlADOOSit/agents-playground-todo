@@ -1,5 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
-import TaskPage from './pages/TaskPage';
+import TaskPage from './pages/TaskPage/TaskPage';
 import './App.css';
 
 function App() {
