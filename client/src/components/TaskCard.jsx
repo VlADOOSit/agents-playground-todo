@@ -22,6 +22,7 @@ const TaskCard = ({
   onDelete,
   onStatusChange,
   onEdit,
+  editForm,
 }) => {
   const statusColor = useMemo(() => STATUS_COLORS[task.status] ?? '#8a8f98', [task.status]);
   const deadlineDate = useMemo(() => {
@@ -104,6 +105,7 @@ const TaskCard = ({
               </button>
             </div>
           </div>
+          {editForm ? <div className="task-card__edit">{editForm}</div> : null}
         </div>
       ) : null}
     </article>

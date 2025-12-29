@@ -303,6 +303,14 @@
   gap: 0.5rem;
 }
 
+.task-card__edit {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(15, 23, 42, 0.6);
+}
+
 .task-form {
   display: grid;
   gap: 0.75rem;
