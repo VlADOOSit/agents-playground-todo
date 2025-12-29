@@ -182,10 +182,21 @@
   font-size: 0.9rem;
 }
 
+.task-card__deadline {
+  margin: 0.35rem 0 0;
+  color: #f8d7da;
+  font-size: 0.9rem;
+}
+
 .task-card__controls {
   display: flex;
   align-items: center;
   gap: 0.6rem;
+}
+
+.task-card--overdue {
+  border-color: rgba(239, 68, 68, 0.6);
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.2);
 }
 
 .status-pill {
@@ -195,6 +206,18 @@
   font-weight: 700;
   font-size: 0.85rem;
   text-transform: capitalize;
+}
+
+.overdue-pill {
+  padding: 0.3rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .status-select {

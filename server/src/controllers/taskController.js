@@ -1,6 +1,48 @@
 const taskModel = require('../models/taskModel');
 
 const VALID_STATUSES = new Set(['TODO', 'IN_PROGRESS', 'DONE']);
+const isValidDeadline = (deadline) => {
+	if (deadline === undefined) {
+		return true;
+	}
+
+	if (deadline === null) {
+		return true;
+	}
+
+	if (typeof deadline !== 'string') {
+		return false;
+	}
+
+	const trimmed = deadline.trim();
+	if (!trimmed) {
+		return true;
+	}
+
+	if (!trimmed.includes('T')) {
+		return false;
+	}
+
+	const parsed = new Date(trimmed);
+	return !Number.isNaN(parsed.getTime());
+};
+
+const normalizeDeadline = (deadline) => {
+	if (deadline === undefined) {
+		return undefined;
+	}
+
+	if (deadline === null) {
+		return null;
+	}
+
+	const trimmed = typeof deadline === 'string' ? deadline.trim() : deadline;
+	if (trimmed === '') {
+		return null;
+	}
+
+	return trimmed;
+};
 
 class TaskController {
 	async listTasks(req, res) {
@@ -51,7 +93,7 @@ class TaskController {
 
 	async createTask(req, res) {
 		try {
-			const { title, description, status } = req.body;
+			const { title, description, status, deadline } = req.body;
 
 			if (!title || !title.trim()) {
 				return res.status(400).json({ error: 'Title is required' });
@@ -61,7 +103,12 @@ class TaskController {
 				return res.status(400).json({ error: 'Invalid status value' });
 			}
 
-			const newTask = await taskModel.create({ title, description, status });
+			const normalizedDeadline = normalizeDeadline(deadline);
+			if (!isValidDeadline(normalizedDeadline)) {
+				return res.status(400).json({ error: 'Deadline must be an ISO datetime string' });
+			}
+
+			const newTask = await taskModel.create({ title, description, status, deadline: normalizedDeadline });
 			res.status(201).json(newTask);
 		} catch (error) {
 			console.error('Error creating task', error);
@@ -72,7 +119,7 @@ class TaskController {
 	async updateTask(req, res) {
 		try {
 			const { id } = req.params;
-			const { title, description, status } = req.body;
+			const { title, description, status, deadline } = req.body;
 
 			if (title !== undefined && !title.trim()) {
 				return res.status(400).json({ error: 'Title cannot be empty' });
@@ -82,7 +129,12 @@ class TaskController {
 				return res.status(400).json({ error: 'Invalid status value' });
 			}
 
-			const updatedTask = await taskModel.update(id, { title, description, status });
+			const normalizedDeadline = normalizeDeadline(deadline);
+			if (deadline !== undefined && !isValidDeadline(normalizedDeadline)) {
+				return res.status(400).json({ error: 'Deadline must be an ISO datetime string' });
+			}
+
+			const updatedTask = await taskModel.update(id, { title, description, status, deadline: normalizedDeadline });
 
 			if (!updatedTask) {
 				return res.status(404).json({ error: 'Task not found' });

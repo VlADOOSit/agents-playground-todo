@@ -24,16 +24,27 @@ const TaskCard = ({
   onEdit,
 }) => {
   const statusColor = useMemo(() => STATUS_COLORS[task.status] ?? '#8a8f98', [task.status]);
+  const deadlineDate = useMemo(() => {
+    if (!task.deadline) {
+      return null;
+    }
+
+    const parsed = new Date(task.deadline);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }, [task.deadline]);
+  const isOverdue = Boolean(deadlineDate && deadlineDate.getTime() < Date.now() && task.status !== 'DONE');
 
   return (
-    <article className={`task-card ${expanded ? 'task-card--expanded' : ''}`}>
+    <article className={`task-card ${expanded ? 'task-card--expanded' : ''} ${isOverdue ? 'task-card--overdue' : ''}`}>
       <header className="task-card__header">
         <div>
           <p className="task-card__meta">Task #{task.id}</p>
           <h3 className="task-card__title">{task.title}</h3>
+          <p className="task-card__deadline">Deadline: {formatDate(task.deadline)}</p>
         </div>
 
         <div className="task-card__controls">
+          {isOverdue ? <span className="overdue-pill">Overdue</span> : null}
           <span className="status-pill" style={{ backgroundColor: statusColor }}>
             {task.status.replace('_', ' ')}
           </span>
