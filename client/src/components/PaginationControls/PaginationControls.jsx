@@ -1,4 +1,5 @@
 import React from 'react';
+import './PaginationControls.css';
 
 const PaginationControls = ({ currentPage, totalPages, totalTasks, onPageChange }) => {
   if (totalPages <= 1) return null;
