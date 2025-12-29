@@ -75,6 +75,7 @@ paths:
                   title: Buy milk
                   description: 2% or oat milk
                   status: TODO
+                  deadline: 2025-02-01T15:00:00Z
       responses:
         '201':
           description: Task created.
@@ -83,7 +84,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Task'
         '400':
-          description: Validation failed (missing title or invalid status).
+          description: Validation failed (missing title, invalid status, or invalid deadline).
           content:
             application/json:
               schema:
@@ -130,6 +131,7 @@ paths:
               title: Buy groceries
               description: Include fruit
               status: IN_PROGRESS
+              deadline: 2025-02-10T10:00:00Z
       responses:
         '200':
           description: Task updated.
@@ -138,7 +140,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Task'
         '400':
-          description: Validation failed (empty title or invalid status).
+          description: Validation failed (empty title, invalid status, or invalid deadline).
           content:
             application/json:
               schema:
@@ -170,9 +172,9 @@ paths:
 components:
   schemas:
     TaskStatus:
-      type: string
-      description: Task status enum as stored in Postgres.
-      enum: [TODO, IN_PROGRESS, DONE]
+          type: string
+          description: Task status enum as stored in Postgres.
+          enum: [TODO, IN_PROGRESS, DONE]
     Task:
       type: object
       properties:
@@ -186,6 +188,11 @@ components:
           nullable: true
         status:
           $ref: '#/components/schemas/TaskStatus'
+        deadline:
+          type: string
+          format: date-time
+          nullable: true
+          description: Optional task deadline in ISO 8601 format.
         created_at:
           type: string
           format: date-time
@@ -220,6 +227,11 @@ components:
           nullable: true
         status:
           $ref: '#/components/schemas/TaskStatus'
+        deadline:
+          type: string
+          format: date-time
+          nullable: true
+          description: Optional deadline in ISO 8601 format (e.g. 2025-02-01T15:00:00Z).
       required: [title]
     UpdateTaskInput:
       type: object
@@ -232,6 +244,11 @@ components:
           nullable: true
         status:
           $ref: '#/components/schemas/TaskStatus'
+        deadline:
+          type: string
+          format: date-time
+          nullable: true
+          description: Optional deadline in ISO 8601 format. Provide null to clear the deadline.
       description: Provide any combination of fields to update.
     ErrorResponse:
       type: object
