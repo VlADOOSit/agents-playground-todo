@@ -5,16 +5,18 @@ import TaskFilters from '../../components/TaskFilters/TaskFilters';
 import PaginationControls from '../../components/PaginationControls/PaginationControls';
 import tasksApi from '../../api/tasks';
 import { TASKS_PER_PAGE } from '../../utils/constant';
+import { getInitialState, updateQueryParams, getQueryParams } from '../../utils/urlUtils';
 import './TasksPage.css';
 
 const TasksPage = () => {
+  const initialState = getInitialState();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(initialState.page);
   const [totalPages, setTotalPages] = useState(1);
   const [totalTasks, setTotalTasks] = useState(0);
-  const [currentFilter, setCurrentFilter] = useState('ALL');
-  const [currentSort, setCurrentSort] = useState('createdAt');
+  const [currentFilter, setCurrentFilter] = useState(initialState.status);
+  const [currentSort, setCurrentSort] = useState(initialState.sort);
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -32,6 +34,19 @@ const TasksPage = () => {
     };
     fetchTasks();
   }, [currentPage, currentFilter, currentSort]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const params = getQueryParams();
+      setCurrentPage(params.page);
+      setCurrentFilter(params.status);
+      setCurrentSort(params.sort);
+      setLoading(true);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   const handleDeleteTask = async (id) => {
     try {
@@ -97,18 +112,21 @@ const TasksPage = () => {
 
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
+    updateQueryParams({ page: newPage, status: currentFilter, sort: currentSort });
     setLoading(true);
   };
 
   const handleFilterChange = (newFilter) => {
     setCurrentFilter(newFilter);
     setCurrentPage(1);
+    updateQueryParams({ page: 1, status: newFilter, sort: currentSort });
     setLoading(true);
   };
 
   const handleSortChange = (newSort) => {
     setCurrentSort(newSort);
     setCurrentPage(1);
+    updateQueryParams({ page: 1, status: currentFilter, sort: newSort });
     setLoading(true);
   };
 
