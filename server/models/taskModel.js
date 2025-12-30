@@ -22,12 +22,9 @@ class TaskModel {
             paramIndex++;
         }
 
-        // Add ORDER BY clause based on sort parameter
         if (sort === 'deadline') {
-            // Tasks with deadline first (nearest deadline first), tasks without deadline last
             query += ' ORDER BY deadline IS NULL, deadline ASC LIMIT $1 OFFSET $2;';
         } else {
-            // Default: sort by created date (descending)
             query += ' ORDER BY created_at DESC LIMIT $1 OFFSET $2;';
         }
 
