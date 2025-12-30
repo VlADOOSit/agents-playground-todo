@@ -1,56 +1,13 @@
 const taskModel = require('../models/taskModel');
-
-const VALID_STATUSES = new Set(['TODO', 'IN_PROGRESS', 'DONE']);
-const VALID_SORTS = new Set(['createdAt', 'deadline']);
-const isValidDeadline = (deadline) => {
-	if (deadline === undefined) {
-		return true;
-	}
-
-	if (deadline === null) {
-		return true;
-	}
-
-	if (typeof deadline !== 'string') {
-		return false;
-	}
-
-	const trimmed = deadline.trim();
-	if (!trimmed) {
-		return true;
-	}
-
-	if (!trimmed.includes('T')) {
-		return false;
-	}
-
-	const parsed = new Date(trimmed);
-	return !Number.isNaN(parsed.getTime());
-};
-
-const normalizeDeadline = (deadline) => {
-	if (deadline === undefined) {
-		return undefined;
-	}
-
-	if (deadline === null) {
-		return null;
-	}
-
-	const trimmed = typeof deadline === 'string' ? deadline.trim() : deadline;
-	if (trimmed === '') {
-		return null;
-	}
-
-	return trimmed;
-};
+const { VALID_STATUSES, VALID_SORTS, isValidDeadline, normalizeDeadline } = require('../services/taskValidation');
 
 class TaskController {
 	async listTasks(req, res) {
 		try {
 			const pageParam = Number.parseInt(req.query.page, 10);
 			const page = Number.isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
-			const limit = 5;
+			const limitParam = Number.parseInt(req.query.limit, 10);
+			const limit = Number.isNaN(limitParam) || limitParam < 1 ? 5 : Math.min(limitParam, 50);
 			const offset = (page - 1) * limit;
 			const status = req.query.status;
 			const sortParam = req.query.sort;
@@ -76,6 +33,7 @@ class TaskController {
 				page,
 				totalPages,
 				totalCount,
+				limit,
 			});
 		} catch (error) {
 			console.error('Error fetching tasks', error);

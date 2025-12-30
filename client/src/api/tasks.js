@@ -1,6 +1,6 @@
 import client from './client';
 
-export const getTasks = async ({ page = 1, status, sort } = {}) => {
+export const getTasks = async ({ page = 1, status, sort, limit } = {}) => {
   const params = { page };
 
   if (status) {
@@ -9,6 +9,10 @@ export const getTasks = async ({ page = 1, status, sort } = {}) => {
 
   if (sort) {
     params.sort = sort;
+  }
+
+  if (limit) {
+    params.limit = limit;
   }
 
   const { data } = await client.get('/tasks', { params });
