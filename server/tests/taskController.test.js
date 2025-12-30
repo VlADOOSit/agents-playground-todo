@@ -60,6 +60,7 @@ describe('TaskController', () => {
 				page: 1,
 				totalPages: 2,
 				totalCount: 6,
+				limit: 5,
 			});
 		});
 
@@ -78,6 +79,7 @@ describe('TaskController', () => {
 				page: 3,
 				totalPages: 1,
 				totalCount: 0,
+				limit: 5,
 			});
 		});
 
@@ -90,6 +92,24 @@ describe('TaskController', () => {
 			await taskController.listTasks(req, res);
 
 			expect(taskModel.getAll).toHaveBeenCalledWith({ limit: 5, offset: 0, status: undefined, sort: 'deadline' });
+		});
+
+		it('uses a custom per-page limit when provided', async () => {
+			taskModel.getAll.mockResolvedValue([]);
+			taskModel.getTotalCount.mockResolvedValue(12);
+			const req = { query: { page: '2', limit: '10' } };
+			const res = createResponse();
+
+			await taskController.listTasks(req, res);
+
+			expect(taskModel.getAll).toHaveBeenCalledWith({ limit: 10, offset: 10, status: undefined, sort: 'createdAt' });
+			expect(res.json).toHaveBeenCalledWith({
+				tasks: [],
+				page: 2,
+				totalPages: 2,
+				totalCount: 12,
+				limit: 10,
+			});
 		});
 
 		it('responds with 500 on unexpected errors', async () => {
