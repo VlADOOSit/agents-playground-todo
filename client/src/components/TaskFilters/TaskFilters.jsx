@@ -1,4 +1,3 @@
-import React from 'react';
 import './TaskFilters.css';
 
 const TaskFilters = ({ currentFilter, onFilterChange, currentSort, onSortChange }) => {

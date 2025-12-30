@@ -23,17 +23,17 @@
 }
 
 .tasks-list {
-  background-color: transparent; /* Removed background color */
-  padding: 0; /* Removed padding */
-  border-radius: 0; /* Removed border-radius */
-  box-shadow: none; /* Removed box-shadow */
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
   border: none;
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
   width: 100%;
-  max-width: 1000px; /* Smaller width for tasks */
-  margin: var(--spacing-xl) auto; /* Center with auto margins */
+  max-width: 1000px;
+  margin: var(--spacing-xl) auto; 
   box-sizing: border-box;
 }
 

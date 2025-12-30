@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import TaskItem from '../../components/TaskItem/TaskItem';
 import TaskForm from '../../components/TaskForm/TaskForm';
 import TaskFilters from '../../components/TaskFilters/TaskFilters';
