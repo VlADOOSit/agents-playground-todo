@@ -36,3 +36,12 @@
   margin: var(--spacing-xl) auto; /* Center with auto margins */
   box-sizing: border-box;
 }
+
+.no-tasks-message {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  color: var(--secondary-text);
+  font-size: 1.2rem;
+}

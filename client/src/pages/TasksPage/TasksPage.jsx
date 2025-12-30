@@ -131,15 +131,21 @@ const TasksPage = () => {
       )}
 
       <div className="tasks-list">
-        {tasks.map((task) => (
-          <TaskItem
-            key={task.id}
-            task={task}
-            onDelete={handleDeleteTask}
-            onUpdateStatus={handleUpdateTaskStatus}
-            onUpdateTask={handleUpdateTask}
-          />
-        ))}
+        {tasks.length === 0 && !loading ? (
+          <div className="no-tasks-message">
+            <p>Tasks not found</p>
+          </div>
+        ) : (
+          tasks.map((task) => (
+            <TaskItem
+              key={task.id}
+              task={task}
+              onDelete={handleDeleteTask}
+              onUpdateStatus={handleUpdateTaskStatus}
+              onUpdateTask={handleUpdateTask}
+            />
+          ))
+        )}
       </div>
 
       <PaginationControls
