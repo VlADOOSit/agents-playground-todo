@@ -1,12 +1,17 @@
 import React from 'react';
 import './TaskFilters.css';
 
-const TaskFilters = ({ currentFilter, onFilterChange }) => {
+const TaskFilters = ({ currentFilter, onFilterChange, currentSort, onSortChange }) => {
   const statusOptions = [
     { value: 'ALL', label: 'All' },
     { value: 'TODO', label: 'TODO' },
     { value: 'IN_PROGRESS', label: 'In Progress' },
     { value: 'DONE', label: 'Done' }
+  ];
+
+  const sortOptions = [
+    { value: 'createdAt', label: 'Created Date' },
+    { value: 'deadline', label: 'Deadline' }
   ];
 
   return (
@@ -21,6 +26,22 @@ const TaskFilters = ({ currentFilter, onFilterChange }) => {
             {option.label}
           </button>
         ))}
+      </div>
+
+      <div className="sort-controls">
+        <label htmlFor="sort-select">Sort by:</label>
+        <select
+          id="sort-select"
+          value={currentSort}
+          onChange={(e) => onSortChange(e.target.value)}
+          className="sort-select"
+        >
+          {sortOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
       </div>
     </div>
   );

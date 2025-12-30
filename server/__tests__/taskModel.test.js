@@ -53,7 +53,7 @@ describe('TaskModel', () => {
                 rows: mockTasks
             });
 
-            const result = await TaskModel.getAllTasks();
+            const result = await TaskModel.getAllTasks(1, 5, null, 'createdAt');
 
             expect(pool.query).toHaveBeenCalledWith(
                 'SELECT * FROM tasks ORDER BY created_at DESC LIMIT $1 OFFSET $2;',
@@ -69,7 +69,7 @@ describe('TaskModel', () => {
                 rows: mockTasks
             });
 
-            const result = await TaskModel.getAllTasks(2, 10);
+            const result = await TaskModel.getAllTasks(2, 10, null, 'createdAt');
 
             expect(pool.query).toHaveBeenCalledWith(
                 'SELECT * FROM tasks ORDER BY created_at DESC LIMIT $1 OFFSET $2;',
@@ -85,7 +85,7 @@ describe('TaskModel', () => {
                 rows: mockTasks
             });
 
-            const result = await TaskModel.getAllTasks(1, 5, 'pending');
+            const result = await TaskModel.getAllTasks(1, 5, 'pending', 'createdAt');
 
             expect(pool.query).toHaveBeenCalledWith(
                 'SELECT * FROM tasks WHERE status = $3 ORDER BY created_at DESC LIMIT $1 OFFSET $2;',
@@ -101,11 +101,48 @@ describe('TaskModel', () => {
                 rows: mockTasks
             });
 
-            const result = await TaskModel.getAllTasks(1, 5, 'ALL');
+            const result = await TaskModel.getAllTasks(1, 5, 'ALL', 'createdAt');
 
             expect(pool.query).toHaveBeenCalledWith(
                 'SELECT * FROM tasks ORDER BY created_at DESC LIMIT $1 OFFSET $2;',
                 [5, 0]
+            );
+            expect(result).toEqual(mockTasks);
+        });
+
+        test('should sort tasks by deadline', async () => {
+            const mockTasks = [
+                { id: 1, title: 'Task with deadline', deadline: '2025-01-01T00:00:00Z' },
+                { id: 2, title: 'Task without deadline' }
+            ];
+
+            pool.query.mockResolvedValue({
+                rows: mockTasks
+            });
+
+            const result = await TaskModel.getAllTasks(1, 5, null, 'deadline');
+
+            expect(pool.query).toHaveBeenCalledWith(
+                'SELECT * FROM tasks ORDER BY deadline IS NULL, deadline ASC LIMIT $1 OFFSET $2;',
+                [5, 0]
+            );
+            expect(result).toEqual(mockTasks);
+        });
+
+        test('should sort tasks by deadline with status filter', async () => {
+            const mockTasks = [
+                { id: 1, title: 'Task with deadline', status: 'pending', deadline: '2025-01-01T00:00:00Z' }
+            ];
+
+            pool.query.mockResolvedValue({
+                rows: mockTasks
+            });
+
+            const result = await TaskModel.getAllTasks(1, 5, 'pending', 'deadline');
+
+            expect(pool.query).toHaveBeenCalledWith(
+                'SELECT * FROM tasks WHERE status = $3 ORDER BY deadline IS NULL, deadline ASC LIMIT $1 OFFSET $2;',
+                [5, 0, 'pending']
             );
             expect(result).toEqual(mockTasks);
         });

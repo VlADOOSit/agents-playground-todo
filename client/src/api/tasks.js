@@ -4,10 +4,13 @@ import { TASKS_PER_PAGE } from '../utils/constant';
 const API_URL = `${import.meta.env.VITE_API_URL}/tasks`;
 
 const tasksApi = {
-    getAllTasks: async (page = 1, limit = TASKS_PER_PAGE, status = null) => {
+    getAllTasks: async (page = 1, limit = TASKS_PER_PAGE, status = null, sort = 'createdAt') => {
         let url = `${API_URL}?page=${page}&limit=${limit}`;
         if (status && status !== 'ALL') {
             url += `&status=${status}`;
+        }
+        if (sort && sort !== 'createdAt') {
+            url += `&sort=${sort}`;
         }
         const response = await axios.get(url);
         return response.data;

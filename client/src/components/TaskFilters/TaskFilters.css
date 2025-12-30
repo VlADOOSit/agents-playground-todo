@@ -3,6 +3,9 @@
   max-width: 1000px;
   width: 100%;
   box-sizing: border-box;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .filter-chips {
@@ -37,4 +40,49 @@
 
 .filter-chip.active:hover {
   background-color: var(--accent-hover);
+}
+
+.sort-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.sort-controls label {
+  margin: 0;
+  height: 32px;        
+  display: flex;              
+  align-items: center;
+  line-height: 1;       
+  font-size: var(--font-size-sm);
+  font-weight: var(--body-weight);
+  color: var(--primary-text);
+  white-space: nowrap;
+}
+
+.sort-select {
+  height: 32px;
+  padding: 0 var(--spacing-sm);
+  font-size: var(--font-size-sm);
+
+  background-color: var(--secondary-bg);
+  color: var(--secondary-text);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  max-width: 140px;
+  box-sizing: border-box;
+  margin: 0;
+}
+
+
+.sort-select:hover {
+  border-color: var(--accent-color);
+}
+
+.sort-select:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }

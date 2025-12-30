@@ -10,7 +10,7 @@ class TaskModel {
         return result.rows[0];
     }
 
-    async getAllTasks(page = 1, limit = TASKS_PER_PAGE, status = null) {
+    async getAllTasks(page = 1, limit = TASKS_PER_PAGE, status = null, sort = 'createdAt') {
         const offset = (page - 1) * limit;
         let query = 'SELECT * FROM tasks';
         const queryValues = [limit, offset];
@@ -22,7 +22,14 @@ class TaskModel {
             paramIndex++;
         }
 
-        query += ' ORDER BY created_at DESC LIMIT $1 OFFSET $2;';
+        // Add ORDER BY clause based on sort parameter
+        if (sort === 'deadline') {
+            // Tasks with deadline first (nearest deadline first), tasks without deadline last
+            query += ' ORDER BY deadline IS NULL, deadline ASC LIMIT $1 OFFSET $2;';
+        } else {
+            // Default: sort by created date (descending)
+            query += ' ORDER BY created_at DESC LIMIT $1 OFFSET $2;';
+        }
 
         const result = await pool.query(query, queryValues);
         return result.rows;

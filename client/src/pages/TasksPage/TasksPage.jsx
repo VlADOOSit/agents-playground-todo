@@ -14,11 +14,12 @@ const TasksPage = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalTasks, setTotalTasks] = useState(0);
   const [currentFilter, setCurrentFilter] = useState('ALL');
+  const [currentSort, setCurrentSort] = useState('createdAt');
 
   useEffect(() => {
     const fetchTasks = async () => {
       try {
-        const data = await tasksApi.getAllTasks(currentPage, TASKS_PER_PAGE, currentFilter);
+        const data = await tasksApi.getAllTasks(currentPage, TASKS_PER_PAGE, currentFilter, currentSort);
         console.log('Fetched tasks data:', data);
         setTasks(data.tasks);
         setTotalPages(data.pagination.totalPages);
@@ -30,13 +31,13 @@ const TasksPage = () => {
       }
     };
     fetchTasks();
-  }, [currentPage, currentFilter]);
+  }, [currentPage, currentFilter, currentSort]);
 
   const handleDeleteTask = async (id) => {
     try {
       await tasksApi.deleteTask(id);
 
-      const data = await tasksApi.getAllTasks(currentPage, TASKS_PER_PAGE, currentFilter);
+      const data = await tasksApi.getAllTasks(currentPage, TASKS_PER_PAGE, currentFilter, currentSort);
 
       if (data.tasks.length === 0 && currentPage > 1) {
         const prevPage = currentPage - 1;
@@ -71,7 +72,7 @@ const TasksPage = () => {
 
   const handleTaskCreated = async (newTask) => {
     try {
-      const data = await tasksApi.getAllTasks(currentPage, TASKS_PER_PAGE, currentFilter);
+      const data = await tasksApi.getAllTasks(currentPage, TASKS_PER_PAGE, currentFilter, currentSort);
       setTasks(data.tasks);
       setTotalPages(data.pagination.totalPages);
       setTotalTasks(data.pagination.totalTasks);
@@ -105,11 +106,22 @@ const TasksPage = () => {
     setLoading(true);
   };
 
+  const handleSortChange = (newSort) => {
+    setCurrentSort(newSort);
+    setCurrentPage(1);
+    setLoading(true);
+  };
+
   return (
     <div>
       <h1>My Tasks</h1>
       <TaskForm onTaskCreated={handleTaskCreated} />
-      <TaskFilters currentFilter={currentFilter} onFilterChange={handleFilterChange} />
+      <TaskFilters
+        currentFilter={currentFilter}
+        onFilterChange={handleFilterChange}
+        currentSort={currentSort}
+        onSortChange={handleSortChange}
+      />
 
       {loading && (
         <div className="loading-indicator">
