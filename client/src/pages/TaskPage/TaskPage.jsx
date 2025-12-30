@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { createTask, deleteTask, getTasks, updateTask } from '../../api/tasks';
 import TaskFilters from '../../components/TaskFilters/TaskFilters';
 import TaskForm from '../../components/TaskForm/TaskForm';
@@ -8,6 +9,11 @@ import TaskPagination from '../../components/TaskPagination/TaskPagination';
 import { sortTasks } from '../../utils/taskSort';
 import './TaskPage.css';
 
+const DEFAULT_PAGE = 1;
+const DEFAULT_LIMIT = 5;
+const DEFAULT_SORT = 'createdAt';
+const VALID_SORTS = new Set(['createdAt', 'deadline']);
+
 const FILTERS = [
   { value: 'ALL', label: 'All' },
   { value: 'TODO', label: 'Todo' },
@@ -15,18 +21,65 @@ const FILTERS = [
   { value: 'DONE', label: 'Done' },
 ];
 
+const readNumberParam = (value, fallback) => {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isNaN(parsed) || parsed < 1 ? fallback : parsed;
+};
+
+const readFilterParam = (value) => (FILTERS.some((filter) => filter.value === value) ? value : FILTERS[0].value);
+const readSortParam = (value) => (value && VALID_SORTS.has(value) ? value : DEFAULT_SORT);
+
+const parseSearchParams = (searchParams) => ({
+  filter: readFilterParam(searchParams.get('status') ?? searchParams.get('filter')),
+  sort: readSortParam(searchParams.get('sort')),
+  page: readNumberParam(searchParams.get('page'), DEFAULT_PAGE),
+  limit: readNumberParam(searchParams.get('limit'), DEFAULT_LIMIT),
+});
+
+const buildSearchParams = ({ filter, sort, page, limit }) => {
+  const params = new URLSearchParams();
+  params.set('status', filter);
+  params.set('sort', sort);
+  params.set('page', String(page));
+  params.set('limit', String(limit));
+  return params;
+};
+
 const TaskPage = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { filter: initialFilter, sort: initialSort, page: initialPage, limit: initialLimit } = useMemo(
+    () => parseSearchParams(searchParams),
+    [searchParams],
+  );
+
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [expandedIds, setExpandedIds] = useState(new Set());
-  const [activeFilter, setActiveFilter] = useState('ALL');
+  const [activeFilter, setActiveFilter] = useState(initialFilter);
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(initialPage);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  const [sort, setSort] = useState('createdAt');
+  const [sort, setSort] = useState(initialSort);
+  const [limit, setLimit] = useState(initialLimit);
+
+  useEffect(() => {
+    setActiveFilter((prev) => (prev === initialFilter ? prev : initialFilter));
+    setSort((prev) => (prev === initialSort ? prev : initialSort));
+    setPage((prev) => (prev === initialPage ? prev : initialPage));
+    setLimit((prev) => (prev === initialLimit ? prev : initialLimit));
+  }, [initialFilter, initialSort, initialPage, initialLimit]);
+
+  useEffect(() => {
+    const nextParams = buildSearchParams({ filter: activeFilter, sort, page, limit });
+    const currentParams = new URLSearchParams(searchParams);
+
+    if (nextParams.toString() !== currentParams.toString()) {
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [activeFilter, sort, page, limit, searchParams, setSearchParams]);
 
   const sortedTasks = useMemo(() => sortTasks(tasks, sort), [tasks, sort]);
 
@@ -35,10 +88,10 @@ const TaskPage = () => {
     try {
       setLoading(true);
       const status = activeFilter === 'ALL' ? undefined : activeFilter;
-      const data = await getTasks({ page: requestedPage, status, sort });
+      const data = await getTasks({ page: requestedPage, status, sort, limit });
 
       if (data.totalPages < requestedPage && requestedPage > 1) {
-        await loadTasks(data.totalPages);
+        setPage(data.totalPages);
         return;
       }
 
@@ -55,9 +108,23 @@ const TaskPage = () => {
   };
 
   useEffect(() => {
-    loadTasks(1);
+    loadTasks(page);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeFilter, sort]);
+  }, [activeFilter, sort, page, limit]);
+
+  const handleFilterChange = (nextFilter) => {
+    setActiveFilter(nextFilter);
+    setPage(DEFAULT_PAGE);
+  };
+
+  const handleSortChange = (nextSort) => {
+    setSort(nextSort);
+    setPage(DEFAULT_PAGE);
+  };
+
+  const handlePageChange = (nextPage) => {
+    setPage(nextPage);
+  };
 
   const toggleExpand = (taskId) => {
     setExpandedIds((prev) => {
@@ -74,7 +141,8 @@ const TaskPage = () => {
   const handleCreate = async (payload) => {
     try {
       await createTask(payload);
-      await loadTasks(1);
+      setPage(DEFAULT_PAGE);
+      await loadTasks(DEFAULT_PAGE);
       setIsFormVisible(false);
       setError('');
     } catch (err) {
@@ -148,10 +216,10 @@ const TaskPage = () => {
       <div className="panel">
         <TaskFilters
           sort={sort}
-          onSortChange={setSort}
+          onSortChange={handleSortChange}
           filters={FILTERS}
           activeFilter={activeFilter}
-          onFilterChange={setActiveFilter}
+          onFilterChange={handleFilterChange}
         />
         {loading ? <p className="muted">Loading tasks...</p> : null}
         {error ? <p className="error-text">{error}</p> : null}
@@ -173,7 +241,7 @@ const TaskPage = () => {
           onCancelEdit={() => setEditingTask(null)}
         />
         {!loading && !error && totalCount > 0 ? (
-          <TaskPagination page={page} totalPages={totalPages} totalCount={totalCount} onPageChange={loadTasks} />
+          <TaskPagination page={page} totalPages={totalPages} totalCount={totalCount} onPageChange={handlePageChange} />
         ) : null}
       </div>
     </div>
