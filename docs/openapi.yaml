@@ -35,7 +35,7 @@ paths:
   /tasks:
     get:
       summary: Get all tasks
-      description: Retrieve a paginated list of tasks with optional filtering by status
+      description: Retrieve a paginated list of tasks with optional filtering by status and sorting by creation date or deadline
       tags:
         - Tasks
       parameters:
@@ -62,6 +62,15 @@ paths:
           required: false
           schema:
             $ref: '#/components/schemas/TaskStatus'
+        - name: sort
+          in: query
+          description: Sort tasks by field
+          required: false
+          schema:
+            type: string
+            enum: [createdAt, deadline]
+            default: createdAt
+          example: createdAt
       responses:
         '200':
           description: Successfully retrieved tasks

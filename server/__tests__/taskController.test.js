@@ -95,7 +95,7 @@ describe('TaskController', () => {
 
             await TaskController.getAllTasks(mockReq, mockRes);
 
-            expect(TaskModel.getAllTasks).toHaveBeenCalledWith(1, 5, null);
+            expect(TaskModel.getAllTasks).toHaveBeenCalledWith(1, 5, null, 'createdAt');
             expect(TaskModel.getTasksCount).toHaveBeenCalledWith(null);
             expect(mockRes.status).toHaveBeenCalledWith(200);
             expect(mockRes.json).toHaveBeenCalledWith({
@@ -125,7 +125,7 @@ describe('TaskController', () => {
 
             await TaskController.getAllTasks(mockReq, mockRes);
 
-            expect(TaskModel.getAllTasks).toHaveBeenCalledWith(2, 10, 'pending');
+            expect(TaskModel.getAllTasks).toHaveBeenCalledWith(2, 10, 'pending', 'createdAt');
             expect(TaskModel.getTasksCount).toHaveBeenCalledWith('pending');
             expect(mockRes.status).toHaveBeenCalledWith(200);
             expect(mockRes.json).toHaveBeenCalledWith({
@@ -163,6 +163,85 @@ describe('TaskController', () => {
                     limit: 5
                 }
             });
+        });
+
+        test('should get tasks with deadline sorting', async () => {
+            mockReq = {
+                query: {
+                    sort: 'deadline'
+                }
+            };
+
+            const mockTasks = [
+                { id: 1, title: 'Task 1', status: 'pending', deadline: '2025-01-01T00:00:00Z' },
+                { id: 2, title: 'Task 2', status: 'pending' }
+            ];
+
+            TaskModel.getAllTasks.mockResolvedValue(mockTasks);
+            TaskModel.getTasksCount.mockResolvedValue(10);
+
+            await TaskController.getAllTasks(mockReq, mockRes);
+
+            expect(TaskModel.getAllTasks).toHaveBeenCalledWith(1, 5, null, 'deadline');
+            expect(mockRes.status).toHaveBeenCalledWith(200);
+            expect(mockRes.json).toHaveBeenCalledWith({
+                tasks: mockTasks,
+                pagination: {
+                    currentPage: 1,
+                    totalPages: 2,
+                    totalTasks: 10,
+                    limit: 5
+                }
+            });
+        });
+
+        test('should get tasks with custom pagination, status filter, and deadline sorting', async () => {
+            mockReq = {
+                query: {
+                    page: '2',
+                    limit: '10',
+                    status: 'pending',
+                    sort: 'deadline'
+                }
+            };
+
+            const mockTasks = [{ id: 1, title: 'Task 1', status: 'pending', deadline: '2025-01-01T00:00:00Z' }];
+
+            TaskModel.getAllTasks.mockResolvedValue(mockTasks);
+            TaskModel.getTasksCount.mockResolvedValue(25);
+
+            await TaskController.getAllTasks(mockReq, mockRes);
+
+            expect(TaskModel.getAllTasks).toHaveBeenCalledWith(2, 10, 'pending', 'deadline');
+            expect(TaskModel.getTasksCount).toHaveBeenCalledWith('pending');
+            expect(mockRes.status).toHaveBeenCalledWith(200);
+            expect(mockRes.json).toHaveBeenCalledWith({
+                tasks: mockTasks,
+                pagination: {
+                    currentPage: 2,
+                    totalPages: 3,
+                    totalTasks: 25,
+                    limit: 10
+                }
+            });
+        });
+
+        test('should default to createdAt sorting when no sort parameter provided', async () => {
+            mockReq = {
+                query: {}
+            };
+
+            const mockTasks = [
+                { id: 1, title: 'Task 1', status: 'pending' },
+                { id: 2, title: 'Task 2', status: 'pending' }
+            ];
+
+            TaskModel.getAllTasks.mockResolvedValue(mockTasks);
+            TaskModel.getTasksCount.mockResolvedValue(10);
+
+            await TaskController.getAllTasks(mockReq, mockRes);
+
+            expect(TaskModel.getAllTasks).toHaveBeenCalledWith(1, 5, null, 'createdAt');
         });
 
         test('should handle errors and return 500 status', async () => {

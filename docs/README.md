@@ -15,6 +15,7 @@ The `openapi.yaml` file contains the complete OpenAPI 3.0 specification for the 
 -   **Deadline Management**: Set and track task deadlines with overdue indicators
 -   **Pagination**: Support for paginated task listings
 -   **Filtering**: Filter tasks by status (TODO, IN_PROGRESS, DONE)
+-   **Sorting**: Sort tasks by creation date or deadline (nearest deadline first)
 -   **Data Validation**: Proper request/response schemas with examples
 -   **Error Handling**: Standardized error response formats
 
@@ -55,6 +56,12 @@ curl "http://localhost:3001/api/tasks?page=1&limit=10"
 
 # Get tasks by status
 curl "http://localhost:3001/api/tasks?status=TODO"
+
+# Get tasks sorted by deadline (nearest first)
+curl "http://localhost:3001/api/tasks?sort=deadline"
+
+# Get tasks with pagination, filtering, and sorting
+curl "http://localhost:3001/api/tasks?page=1&limit=5&status=TODO&sort=deadline"
 
 # Create a new task
 curl -X POST http://localhost:3001/api/tasks \
