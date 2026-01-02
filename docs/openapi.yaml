@@ -189,13 +189,13 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 
     delete:
-      summary: Delete a task
-      description: Delete a task by its ID
+      summary: Soft delete a task
+      description: Mark a task as deleted (soft delete). The task can be restored within 5 minutes using the restore endpoint.
       tags:
         - Tasks
       responses:
         '200':
-          description: Task deleted successfully
+          description: Task marked for deletion successfully
           content:
             application/json:
               schema:
@@ -203,13 +203,111 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: "Task deleted successfully"
+                    example: "Task marked for deletion successfully"
         '404':
           description: Task not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    patch:
+      summary: Restore a soft-deleted task
+      description: Restore a task that was previously soft-deleted. Only works within the undo window.
+      tags:
+        - Tasks
+      responses:
+        '200':
+          description: Task restored successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          description: Task not found or not eligible for restoration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /tasks/{id}/permanent:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: The task ID
+        schema:
+          type: integer
+          minimum: 1
+
+    delete:
+      summary: Permanently delete a task
+      description: Permanently delete a task from the database. This action cannot be undone.
+      tags:
+        - Tasks
+      responses:
+        '200':
+          description: Task permanently deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Task permanently deleted successfully"
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /tasks/cleanup:
+    delete:
+      summary: Cleanup old soft-deleted tasks
+      description: Permanently delete tasks that have been soft-deleted for longer than the specified time period.
+      tags:
+        - Tasks
+      parameters:
+        - name: olderThanMinutes
+          in: query
+          description: "Minimum age in minutes for soft-deleted tasks to be permanently removed (default: 5)"
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 5
+            example: 5
+      responses:
+        '200':
+          description: Cleanup completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "2 old deleted tasks permanently removed"
         '500':
           description: Internal server error
           content:
@@ -254,6 +352,12 @@ components:
           nullable: true
           description: Optional deadline for the task
           example: "2025-12-31T23:59:59.000Z"
+        deleted_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the task was soft-deleted (null if not deleted)
+          example: null
         created_at:
           type: string
           format: date-time
