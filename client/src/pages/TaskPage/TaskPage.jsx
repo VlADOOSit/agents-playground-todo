@@ -149,8 +149,10 @@ const TaskPage = () => {
       await loadTasks(DEFAULT_PAGE);
       setIsFormVisible(false);
       setError('');
+      return true;
     } catch (err) {
       setError('Could not create the task.');
+      return false;
     }
   };
 
@@ -161,8 +163,10 @@ const TaskPage = () => {
       setEditingTask(null);
       setIsFormVisible(false);
       setError('');
+      return true;
     } catch (err) {
       setError('Could not update the task.');
+      return false;
     }
   };
 
@@ -191,11 +195,10 @@ const TaskPage = () => {
 
   const handleFormSubmit = async (payload) => {
     if (editingTask) {
-      await handleUpdate(editingTask.id, payload);
-      return;
+      return handleUpdate(editingTask.id, payload);
     }
 
-    await handleCreate(payload);
+    return handleCreate(payload);
   };
 
   const handleEditStart = (task) => {
