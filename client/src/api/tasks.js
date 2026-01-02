@@ -30,6 +30,21 @@ const tasksApi = {
         const response = await axios.delete(`${API_URL}/${id}`);
         return response.data;
     },
+
+    restoreTask: async (id) => {
+        const response = await axios.patch(`${API_URL}/${id}/restore`);
+        return response.data;
+    },
+
+    permanentDeleteTask: async (id) => {
+        const response = await axios.delete(`${API_URL}/${id}/permanent`);
+        return response.data;
+    },
+
+    cleanupDeletedTasks: async (olderThanMinutes = 5) => {
+        const response = await axios.delete(`${API_URL}?olderThanMinutes=${olderThanMinutes}`);
+        return response.data;
+    },
 };
 
 export default tasksApi;

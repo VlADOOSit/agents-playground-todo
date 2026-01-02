@@ -12,12 +12,12 @@ class TaskModel {
 
     async getAllTasks(page = 1, limit = TASKS_PER_PAGE, status = null, sort = 'createdAt') {
         const offset = (page - 1) * limit;
-        let query = 'SELECT * FROM tasks';
+        let query = 'SELECT * FROM tasks WHERE deleted_at IS NULL';
         const queryValues = [limit, offset];
         let paramIndex = 3;
 
         if (status && status !== 'ALL') {
-            query += ' WHERE status = $' + paramIndex;
+            query += ' AND status = $' + paramIndex;
             queryValues.push(status);
             paramIndex++;
         }
@@ -33,11 +33,11 @@ class TaskModel {
     }
 
     async getTasksCount(status = null) {
-        let query = 'SELECT COUNT(*) as total FROM tasks';
+        let query = 'SELECT COUNT(*) as total FROM tasks WHERE deleted_at IS NULL';
         const queryValues = [];
 
         if (status && status !== 'ALL') {
-            query += ' WHERE status = $1';
+            query += ' AND status = $1';
             queryValues.push(status);
         }
 
@@ -46,7 +46,7 @@ class TaskModel {
     }
 
     async getTaskById(id) {
-        const result = await pool.query('SELECT * FROM tasks WHERE id = $1;', [parseInt(id)]);
+        const result = await pool.query('SELECT * FROM tasks WHERE id = $1 AND deleted_at IS NULL;', [parseInt(id)]);
         return result.rows[0];
     }
 
@@ -75,9 +75,25 @@ class TaskModel {
         return result.rows[0];
     }
 
-    async deleteTask(id) {
+    async softDeleteTask(id) {
+        const result = await pool.query('UPDATE tasks SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL RETURNING id;', [parseInt(id)]);
+        return result.rows[0];
+    }
+
+    async restoreTask(id) {
+        const result = await pool.query('UPDATE tasks SET deleted_at = NULL WHERE id = $1 RETURNING id, title, description, status, deadline, created_at, updated_at;', [parseInt(id)]);
+        return result.rows[0];
+    }
+
+    async permanentDeleteTask(id) {
         const result = await pool.query('DELETE FROM tasks WHERE id = $1 RETURNING id;', [parseInt(id)]);
         return result.rows[0];
+    }
+
+    async getDeletedTasks(olderThanMinutes = 5) {
+        const cutoffTime = new Date(Date.now() - olderThanMinutes * 60 * 1000);
+        const result = await pool.query('SELECT * FROM tasks WHERE deleted_at IS NOT NULL AND deleted_at < $1', [cutoffTime]);
+        return result.rows;
     }
 }
 

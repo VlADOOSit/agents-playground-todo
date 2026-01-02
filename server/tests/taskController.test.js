@@ -394,13 +394,13 @@ describe('TaskController', () => {
                 params: { id: '1' }
             };
 
-            TaskModel.deleteTask.mockResolvedValue({ id: 1 });
+            TaskModel.softDeleteTask.mockResolvedValue({ id: 1 });
 
             await TaskController.deleteTask(mockReq, mockRes);
 
-            expect(TaskModel.deleteTask).toHaveBeenCalledWith('1');
+            expect(TaskModel.softDeleteTask).toHaveBeenCalledWith('1');
             expect(mockRes.status).toHaveBeenCalledWith(200);
-            expect(mockRes.json).toHaveBeenCalledWith({ message: 'Task deleted successfully' });
+            expect(mockRes.json).toHaveBeenCalledWith({ message: 'Task marked for deletion successfully' });
         });
 
         test('should return 404 when task not found for deletion', async () => {
@@ -408,11 +408,11 @@ describe('TaskController', () => {
                 params: { id: '999' }
             };
 
-            TaskModel.deleteTask.mockResolvedValue(null);
+            TaskModel.softDeleteTask.mockResolvedValue(null);
 
             await TaskController.deleteTask(mockReq, mockRes);
 
-            expect(TaskModel.deleteTask).toHaveBeenCalledWith('999');
+            expect(TaskModel.softDeleteTask).toHaveBeenCalledWith('999');
             expect(mockRes.status).toHaveBeenCalledWith(404);
             expect(mockRes.json).toHaveBeenCalledWith({ message: 'Task not found' });
         });
@@ -423,12 +423,178 @@ describe('TaskController', () => {
             };
 
             const error = new Error('Database error');
-            TaskModel.deleteTask.mockRejectedValue(error);
+            TaskModel.softDeleteTask.mockRejectedValue(error);
 
             await TaskController.deleteTask(mockReq, mockRes);
 
             expect(mockRes.status).toHaveBeenCalledWith(500);
             expect(mockRes.json).toHaveBeenCalledWith({ message: 'Error deleting task' });
+        });
+    });
+
+    describe('restoreTask', () => {
+        test('should restore a task and return 200 status', async () => {
+            const restoredTask = {
+                id: 1,
+                title: 'Test Task',
+                description: 'Test Description',
+                status: 'TODO',
+                created_at: '2025-01-01T00:00:00Z',
+                updated_at: '2025-01-01T00:00:00Z'
+            };
+
+            mockReq = {
+                params: { id: '1' }
+            };
+
+            TaskModel.restoreTask.mockResolvedValue(restoredTask);
+
+            await TaskController.restoreTask(mockReq, mockRes);
+
+            expect(TaskModel.restoreTask).toHaveBeenCalledWith('1');
+            expect(mockRes.status).toHaveBeenCalledWith(200);
+            expect(mockRes.json).toHaveBeenCalledWith(restoredTask);
+        });
+
+        test('should return 404 when task not found for restore', async () => {
+            mockReq = {
+                params: { id: '999' }
+            };
+
+            TaskModel.restoreTask.mockResolvedValue(null);
+
+            await TaskController.restoreTask(mockReq, mockRes);
+
+            expect(TaskModel.restoreTask).toHaveBeenCalledWith('999');
+            expect(mockRes.status).toHaveBeenCalledWith(404);
+            expect(mockRes.json).toHaveBeenCalledWith({ message: 'Task not found' });
+        });
+
+        test('should handle errors and return 500 status', async () => {
+            mockReq = {
+                params: { id: '1' }
+            };
+
+            TaskModel.restoreTask.mockRejectedValue(new Error('Database error'));
+
+            await TaskController.restoreTask(mockReq, mockRes);
+
+            expect(TaskModel.restoreTask).toHaveBeenCalledWith('1');
+            expect(mockRes.status).toHaveBeenCalledWith(500);
+            expect(mockRes.json).toHaveBeenCalledWith({ message: 'Error restoring task' });
+        });
+    });
+
+    describe('permanentDeleteTask', () => {
+        test('should permanently delete a task and return 200 status', async () => {
+            mockReq = {
+                params: { id: '1' }
+            };
+
+            TaskModel.permanentDeleteTask.mockResolvedValue({ id: 1 });
+
+            await TaskController.permanentDeleteTask(mockReq, mockRes);
+
+            expect(TaskModel.permanentDeleteTask).toHaveBeenCalledWith('1');
+            expect(mockRes.status).toHaveBeenCalledWith(200);
+            expect(mockRes.json).toHaveBeenCalledWith({ message: 'Task permanently deleted successfully' });
+        });
+
+        test('should return 404 when task not found for permanent deletion', async () => {
+            mockReq = {
+                params: { id: '999' }
+            };
+
+            TaskModel.permanentDeleteTask.mockResolvedValue(null);
+
+            await TaskController.permanentDeleteTask(mockReq, mockRes);
+
+            expect(TaskModel.permanentDeleteTask).toHaveBeenCalledWith('999');
+            expect(mockRes.status).toHaveBeenCalledWith(404);
+            expect(mockRes.json).toHaveBeenCalledWith({ message: 'Task not found' });
+        });
+
+        test('should handle errors and return 500 status', async () => {
+            mockReq = {
+                params: { id: '1' }
+            };
+
+            TaskModel.permanentDeleteTask.mockRejectedValue(new Error('Database error'));
+
+            await TaskController.permanentDeleteTask(mockReq, mockRes);
+
+            expect(TaskModel.permanentDeleteTask).toHaveBeenCalledWith('1');
+            expect(mockRes.status).toHaveBeenCalledWith(500);
+            expect(mockRes.json).toHaveBeenCalledWith({ message: 'Error permanently deleting task' });
+        });
+    });
+
+    describe('cleanupDeletedTasks', () => {
+        test('should cleanup old deleted tasks with default olderThanMinutes', async () => {
+            const deletedTasks = [
+                { id: 1, title: 'Old Task 1' },
+                { id: 2, title: 'Old Task 2' }
+            ];
+
+            mockReq = {
+                query: {}
+            };
+
+            TaskModel.getDeletedTasks.mockResolvedValue(deletedTasks);
+            TaskModel.permanentDeleteTask.mockResolvedValue({ id: 1 });
+
+            await TaskController.cleanupDeletedTasks(mockReq, mockRes);
+
+            expect(TaskModel.getDeletedTasks).toHaveBeenCalledWith(5);
+            expect(TaskModel.permanentDeleteTask).toHaveBeenCalledTimes(2);
+            expect(mockRes.status).toHaveBeenCalledWith(200);
+            expect(mockRes.json).toHaveBeenCalledWith({ message: '2 old deleted tasks permanently removed' });
+        });
+
+        test('should cleanup old deleted tasks with custom olderThanMinutes', async () => {
+            const deletedTasks = [{ id: 1, title: 'Old Task' }];
+
+            mockReq = {
+                query: { olderThanMinutes: '10' }
+            };
+
+            TaskModel.getDeletedTasks.mockResolvedValue(deletedTasks);
+            TaskModel.permanentDeleteTask.mockResolvedValue({ id: 1 });
+
+            await TaskController.cleanupDeletedTasks(mockReq, mockRes);
+
+            expect(TaskModel.getDeletedTasks).toHaveBeenCalledWith('10');
+            expect(TaskModel.permanentDeleteTask).toHaveBeenCalledTimes(1);
+            expect(mockRes.status).toHaveBeenCalledWith(200);
+            expect(mockRes.json).toHaveBeenCalledWith({ message: '1 old deleted tasks permanently removed' });
+        });
+
+        test('should handle no tasks to cleanup', async () => {
+            mockReq = {
+                query: {}
+            };
+
+            TaskModel.getDeletedTasks.mockResolvedValue([]);
+
+            await TaskController.cleanupDeletedTasks(mockReq, mockRes);
+
+            expect(TaskModel.getDeletedTasks).toHaveBeenCalledWith(5);
+            expect(TaskModel.permanentDeleteTask).not.toHaveBeenCalled();
+            expect(mockRes.status).toHaveBeenCalledWith(200);
+            expect(mockRes.json).toHaveBeenCalledWith({ message: '0 old deleted tasks permanently removed' });
+        });
+
+        test('should handle errors and return 500 status', async () => {
+            mockReq = {
+                query: {}
+            };
+
+            TaskModel.getDeletedTasks.mockRejectedValue(new Error('Database error'));
+
+            await TaskController.cleanupDeletedTasks(mockReq, mockRes);
+
+            expect(mockRes.status).toHaveBeenCalledWith(500);
+            expect(mockRes.json).toHaveBeenCalledWith({ message: 'Error cleaning up deleted tasks' });
         });
     });
 });
