@@ -33,3 +33,8 @@ export const deleteTask = async (id) => {
   await client.delete(`/tasks/${id}`);
   return id;
 };
+
+export const undoDeleteTask = async (id) => {
+  const { data } = await client.post(`/tasks/${id}/undo`);
+  return data;
+};

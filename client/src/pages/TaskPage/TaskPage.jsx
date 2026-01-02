@@ -1,18 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { createTask, deleteTask, getTasks, updateTask } from '../../api/tasks';
+import { createTask, deleteTask, getTasks, undoDeleteTask, updateTask } from '../../api/tasks';
 import TaskFilters from '../../components/TaskFilters/TaskFilters';
 import TaskForm from '../../components/TaskForm/TaskForm';
 import TaskList from '../../components/TaskList/TaskList';
 import TaskPageHeader from '../../components/TaskPageHeader/TaskPageHeader';
 import TaskPagination from '../../components/TaskPagination/TaskPagination';
 import { sortTasks } from '../../utils/taskSort';
+import UndoToastStack from '../../components/UndoToastStack/UndoToastStack';
+import useUndoQueue from '../../hooks/useUndoQueue';
 import './TaskPage.css';
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 5;
 const DEFAULT_SORT = 'createdAt';
 const VALID_SORTS = new Set(['createdAt', 'deadline']);
+const UNDO_WINDOW_MS = 5000;
 
 const FILTERS = [
   { value: 'ALL', label: 'All' },
@@ -64,6 +67,7 @@ const TaskPage = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [sort, setSort] = useState(initialSort);
   const [limit, setLimit] = useState(initialLimit);
+  const { queue: undoQueue, add: enqueueUndo, dismiss: dismissUndo, secondsLeftFor } = useUndoQueue(UNDO_WINDOW_MS);
 
   useEffect(() => {
     setActiveFilter((prev) => (prev === initialFilter ? prev : initialFilter));
@@ -163,6 +167,7 @@ const TaskPage = () => {
   };
 
   const handleDelete = async (taskId) => {
+    const deletedTask = tasks.find((task) => task.id === taskId);
     try {
       await deleteTask(taskId);
       setExpandedIds((prev) => {
@@ -170,6 +175,13 @@ const TaskPage = () => {
         next.delete(taskId);
         return next;
       });
+      setTasks((prev) => prev.filter((task) => task.id !== taskId));
+      setTotalCount((prev) => Math.max(0, prev - 1));
+
+      if (deletedTask) {
+        enqueueUndo(taskId, deletedTask);
+      }
+
       await loadTasks(page);
       setError('');
     } catch (err) {
@@ -194,6 +206,17 @@ const TaskPage = () => {
     });
     setEditingTask(task);
     setIsFormVisible(false);
+  };
+
+  const handleUndoDelete = async (taskId) => {
+    dismissUndo(taskId);
+    try {
+      await undoDeleteTask(taskId);
+      await loadTasks(page);
+      setError('');
+    } catch (err) {
+      setError('Could not undo the delete.');
+    }
   };
 
   return (
@@ -244,6 +267,8 @@ const TaskPage = () => {
           <TaskPagination page={page} totalPages={totalPages} totalCount={totalCount} onPageChange={handlePageChange} />
         ) : null}
       </div>
+
+      <UndoToastStack items={undoQueue} onUndo={handleUndoDelete} onDismiss={dismissUndo} secondsLeftFor={secondsLeftFor} />
     </div>
   );
 };
