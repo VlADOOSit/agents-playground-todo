@@ -117,6 +117,9 @@ const TasksPage = () => {
   };
 
   const handleFilterChange = (newFilter) => {
+    if (currentFilter === newFilter) {
+      return;
+    }
     setCurrentFilter(newFilter);
     setCurrentPage(1);
     updateQueryParams({ page: 1, status: newFilter, sort: currentSort });
