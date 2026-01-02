@@ -13,7 +13,7 @@ const Toast = ({ message, onUndo, onDismiss, duration = 5000, showCountdown = tr
         if (prev <= 1) {
           clearInterval(interval);
           setIsVisible(false);
-          setTimeout(() => onDismiss && onDismiss(), 300); // Allow fade out animation
+          setTimeout(() => onDismiss && onDismiss(), 300);
           return 0;
         }
         return prev - 1;
@@ -26,7 +26,6 @@ const Toast = ({ message, onUndo, onDismiss, duration = 5000, showCountdown = tr
   const handleUndo = () => {
     setIsVisible(false);
     onUndo && onUndo();
-    // Also call onDismiss to clear the timeout
     onDismiss && onDismiss();
   };
 

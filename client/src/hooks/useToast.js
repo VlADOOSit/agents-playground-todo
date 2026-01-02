@@ -19,7 +19,6 @@ export const useToast = () => {
 
         setToasts((prevToasts) => [...prevToasts, toast]);
 
-        // Auto-remove toast after duration if not manually dismissed
         if (options.duration !== 0) {
             const timeoutId = setTimeout(() => {
                 dismissToast(id);
@@ -36,7 +35,6 @@ export const useToast = () => {
     }, []);
 
     const dismissToast = useCallback((id) => {
-        // Clear the timeout if it exists
         const timeoutId = timeoutsRef.current.get(id);
         if (timeoutId) {
             clearTimeout(timeoutId);
@@ -47,7 +45,6 @@ export const useToast = () => {
     }, []);
 
     const clearAllToasts = useCallback(() => {
-        // Clear all timeouts
         timeoutsRef.current.forEach(timeoutId => clearTimeout(timeoutId));
         timeoutsRef.current.clear();
 

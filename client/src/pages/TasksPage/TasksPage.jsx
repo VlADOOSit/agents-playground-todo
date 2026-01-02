@@ -51,31 +51,27 @@ const TasksPage = () => {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  // Periodic cleanup of old deleted tasks
   useEffect(() => {
     const cleanupInterval = setInterval(async () => {
       try {
-        await tasksApi.cleanupDeletedTasks(5); // Clean tasks older than 5 minutes
+        await tasksApi.cleanupDeletedTasks(5);
       } catch (error) {
         console.error('Error during cleanup:', error);
       }
-    }, 60000); // Run every minute
+    }, 60000);
 
     return () => clearInterval(cleanupInterval);
   }, []);
 
   const handleDeleteTask = async (id) => {
     try {
-      // Soft delete on backend
       await tasksApi.deleteTask(id);
 
-      // Refetch data to get correct tasks for current page (including any that moved from next page)
       const data = await tasksApi.getAllTasks(currentPage, TASKS_PER_PAGE, currentFilter, currentSort);
       setTasks(data.tasks);
       setTotalPages(data.pagination.totalPages);
       setTotalTasks(data.pagination.totalTasks);
 
-      // Show undo toast
       addToast('Task deleted', {
         onUndo: () => handleUndoDelete(id),
         onTimeout: () => handlePermanentDelete(id),
@@ -91,10 +87,8 @@ const TasksPage = () => {
 
   const handleUndoDelete = async (id) => {
     try {
-      // First restore the task in the database
       await tasksApi.restoreTask(id);
 
-      // Then refresh the tasks list to get the restored task
       const data = await tasksApi.getAllTasks(currentPage, TASKS_PER_PAGE, currentFilter, currentSort);
       setTasks(data.tasks);
       setTotalPages(data.pagination.totalPages);
@@ -118,7 +112,6 @@ const TasksPage = () => {
       await tasksApi.permanentDeleteTask(id);
     } catch (error) {
       console.error('Error permanently deleting task:', error);
-      // This is a cleanup operation, so we don't show user errors for this
     }
   };
 
