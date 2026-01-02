@@ -80,14 +80,60 @@ class TaskController {
     async deleteTask(req, res) {
         const { id } = req.params;
         try {
-            const deletedTask = await TaskModel.deleteTask(id);
+            const deletedTask = await TaskModel.softDeleteTask(id);
             if (!deletedTask) {
                 return res.status(404).json({ message: 'Task not found' });
             }
-            res.status(200).json({ message: 'Task deleted successfully' });
+            res.status(200).json({ message: 'Task marked for deletion successfully' });
         } catch (error) {
-            console.error('Error deleting task:', error);
+            console.error('Error soft deleting task:', error);
             res.status(500).json({ message: 'Error deleting task' });
+        }
+    }
+
+    async restoreTask(req, res) {
+        const { id } = req.params;
+        try {
+            const restoredTask = await TaskModel.restoreTask(id);
+            if (!restoredTask) {
+                return res.status(404).json({ message: 'Task not found' });
+            }
+            res.status(200).json(restoredTask);
+        } catch (error) {
+            console.error('Error restoring task:', error);
+            res.status(500).json({ message: 'Error restoring task' });
+        }
+    }
+
+    async permanentDeleteTask(req, res) {
+        const { id } = req.params;
+        try {
+            const deletedTask = await TaskModel.permanentDeleteTask(id);
+            if (!deletedTask) {
+                return res.status(404).json({ message: 'Task not found' });
+            }
+            res.status(200).json({ message: 'Task permanently deleted successfully' });
+        } catch (error) {
+            console.error('Error permanently deleting task:', error);
+            res.status(500).json({ message: 'Error permanently deleting task' });
+        }
+    }
+
+    async cleanupDeletedTasks(req, res) {
+        const { olderThanMinutes = 5 } = req.query;
+        try {
+            const deletedTasks = await TaskModel.getDeletedTasks(olderThanMinutes);
+            let deletedCount = 0;
+
+            for (const task of deletedTasks) {
+                await TaskModel.permanentDeleteTask(task.id);
+                deletedCount++;
+            }
+
+            res.status(200).json({ message: `${deletedCount} old deleted tasks permanently removed` });
+        } catch (error) {
+            console.error('Error cleaning up deleted tasks:', error);
+            res.status(500).json({ message: 'Error cleaning up deleted tasks' });
         }
     }
 }

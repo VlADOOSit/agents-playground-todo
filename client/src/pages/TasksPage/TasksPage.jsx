@@ -3,6 +3,8 @@ import TaskItem from '../../components/TaskItem/TaskItem';
 import TaskForm from '../../components/TaskForm/TaskForm';
 import TaskFilters from '../../components/TaskFilters/TaskFilters';
 import PaginationControls from '../../components/PaginationControls/PaginationControls';
+import ToastContainer from '../../components/Toast/ToastContainer';
+import { useToast } from '../../hooks/useToast';
 import tasksApi from '../../api/tasks';
 import { TASKS_PER_PAGE } from '../../utils/constant';
 import { getInitialState, updateQueryParams, getQueryParams } from '../../utils/urlUtils';
@@ -17,6 +19,7 @@ const TasksPage = () => {
   const [totalTasks, setTotalTasks] = useState(0);
   const [currentFilter, setCurrentFilter] = useState(initialState.status);
   const [currentSort, setCurrentSort] = useState(initialState.sort);
+  const { toasts, addToast, dismissToast } = useToast();
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -48,27 +51,74 @@ const TasksPage = () => {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
+  // Periodic cleanup of old deleted tasks
+  useEffect(() => {
+    const cleanupInterval = setInterval(async () => {
+      try {
+        await tasksApi.cleanupDeletedTasks(5); // Clean tasks older than 5 minutes
+      } catch (error) {
+        console.error('Error during cleanup:', error);
+      }
+    }, 60000); // Run every minute
+
+    return () => clearInterval(cleanupInterval);
+  }, []);
+
   const handleDeleteTask = async (id) => {
     try {
+      // Soft delete on backend
       await tasksApi.deleteTask(id);
 
+      // Refetch data to get correct tasks for current page (including any that moved from next page)
       const data = await tasksApi.getAllTasks(currentPage, TASKS_PER_PAGE, currentFilter, currentSort);
+      setTasks(data.tasks);
+      setTotalPages(data.pagination.totalPages);
+      setTotalTasks(data.pagination.totalTasks);
 
-      if (data.tasks.length === 0 && currentPage > 1) {
-        const prevPage = currentPage - 1;
-        const prevPageData = await tasksApi.getAllTasks(prevPage, TASKS_PER_PAGE, currentFilter);
-        setCurrentPage(prevPage);
-        setTasks(prevPageData.tasks);
-        setTotalPages(prevPageData.pagination.totalPages);
-        setTotalTasks(prevPageData.pagination.totalTasks);
-      } else {
-        setTasks(data.tasks);
-        setTotalPages(data.pagination.totalPages);
-        setTotalTasks(data.pagination.totalTasks);
-      }
+      // Show undo toast
+      addToast('Task deleted', {
+        onUndo: () => handleUndoDelete(id),
+        onTimeout: () => handlePermanentDelete(id),
+      });
     } catch (error) {
       console.error('Error deleting task:', error);
-      setTasks(tasks.filter((task) => task.id !== id));
+      addToast('Failed to delete task. Please try again.', {
+        duration: 3000,
+        showCountdown: false,
+      });
+    }
+  };
+
+  const handleUndoDelete = async (id) => {
+    try {
+      // First restore the task in the database
+      await tasksApi.restoreTask(id);
+
+      // Then refresh the tasks list to get the restored task
+      const data = await tasksApi.getAllTasks(currentPage, TASKS_PER_PAGE, currentFilter, currentSort);
+      setTasks(data.tasks);
+      setTotalPages(data.pagination.totalPages);
+      setTotalTasks(data.pagination.totalTasks);
+
+      addToast('Task restored successfully', {
+        duration: 2000,
+        showCountdown: false,
+      });
+    } catch (error) {
+      console.error('Error restoring task:', error);
+      addToast('Failed to restore task. It may have been permanently deleted.', {
+        duration: 3000,
+        showCountdown: false,
+      });
+    }
+  };
+
+  const handlePermanentDelete = async (id) => {
+    try {
+      await tasksApi.permanentDeleteTask(id);
+    } catch (error) {
+      console.error('Error permanently deleting task:', error);
+      // This is a cleanup operation, so we don't show user errors for this
     }
   };
 
@@ -175,6 +225,8 @@ const TasksPage = () => {
         totalTasks={totalTasks}
         onPageChange={handlePageChange}
       />
+
+      <ToastContainer toasts={toasts} onDismissToast={dismissToast} />
     </div>
   );
 };

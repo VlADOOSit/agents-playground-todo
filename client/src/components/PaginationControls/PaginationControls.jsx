@@ -1,7 +1,7 @@
 import './PaginationControls.css';
 
 const PaginationControls = ({ currentPage, totalPages, totalTasks, onPageChange }) => {
-  if (totalPages <= 1) return null;
+  if (totalTasks === 0) return null;
 
   return (
     <div className="pagination-controls">
