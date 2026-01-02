@@ -4,8 +4,8 @@ A Node.js + React + Postgres TODO application scaffold. The backend follows an M
 
 ## Project structure
 
--   `server/` – Express API following MVC patterns (controllers, routes, models). Includes a health endpoint at `/api/health`.
--   `client/` – React + Vite frontend scaffold ready to consume the API.
+-   `server/` - Express API following MVC patterns (controllers, routes, models). Includes a health endpoint at `/api/health`.
+-   `client/` - React + Vite frontend scaffold ready to consume the API.
 
 ## Running the app locally
 
@@ -74,6 +74,7 @@ docker run --name todo-postgres -e POSTGRES_DB=todo -e POSTGRES_USER=postgres -e
 -   `description`: text, nullable
 -   `status`: enum-like string `TODO | IN_PROGRESS | DONE`
 -   `deadline`: optional ISO 8601 datetime (stored as `timestamptz`); send `null` to clear it
+-   `deleted_at`: nullable timestamp used for soft deletes. `DELETE /api/tasks/:id` sets this to `now()`, all list/count queries exclude deleted tasks, and `POST /api/tasks/:id/undo` clears it if called within 5 seconds of deletion.
 -   `created_at` / `updated_at`: timestamps managed by the API (update sets `updated_at`)
 
 ## Health check

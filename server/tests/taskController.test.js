@@ -2,9 +2,11 @@ jest.mock('../src/models/taskModel', () => ({
 	getAll: jest.fn(),
 	getTotalCount: jest.fn(),
 	getById: jest.fn(),
+	getDeletionState: jest.fn(),
 	create: jest.fn(),
 	update: jest.fn(),
 	delete: jest.fn(),
+	undoDelete: jest.fn(),
 }));
 
 const taskModel = require('../src/models/taskModel');
@@ -328,6 +330,85 @@ describe('TaskController', () => {
 
 			expect(res.status).toHaveBeenCalledWith(204);
 			expect(res.send).toHaveBeenCalled();
+		});
+	});
+
+	describe('undoDelete', () => {
+		it('returns 404 when the task does not exist', async () => {
+			taskModel.getDeletionState.mockResolvedValue(null);
+			const req = { params: { id: '99' } };
+			const res = createResponse();
+
+			await taskController.undoDelete(req, res);
+
+			expect(taskModel.getDeletionState).toHaveBeenCalledWith('99');
+			expect(res.status).toHaveBeenCalledWith(404);
+			expect(res.json).toHaveBeenCalledWith({ error: 'Task not found' });
+		});
+
+		it('returns 409 when the task is not deleted', async () => {
+			taskModel.getDeletionState.mockResolvedValue({ id: '1', deleted_at: null });
+			const req = { params: { id: '1' } };
+			const res = createResponse();
+
+			await taskController.undoDelete(req, res);
+
+			expect(res.status).toHaveBeenCalledWith(409);
+			expect(res.json).toHaveBeenCalledWith({ error: 'Task is not deleted' });
+			expect(taskModel.undoDelete).not.toHaveBeenCalled();
+		});
+
+		it('returns 409 when the undo window is expired', async () => {
+			const past = new Date(Date.now() - 6000).toISOString();
+			taskModel.getDeletionState.mockResolvedValue({ id: '1', deleted_at: past });
+			const req = { params: { id: '1' } };
+			const res = createResponse();
+
+			await taskController.undoDelete(req, res);
+
+			expect(res.status).toHaveBeenCalledWith(409);
+			expect(res.json).toHaveBeenCalledWith({ error: 'Undo window expired' });
+			expect(taskModel.undoDelete).not.toHaveBeenCalled();
+		});
+
+		it('restores a task within the allowed window', async () => {
+			const recent = new Date(Date.now() - 2000).toISOString();
+			const restored = { id: '4', title: 'Restored' };
+			taskModel.getDeletionState.mockResolvedValue({ id: '4', deleted_at: recent });
+			taskModel.undoDelete.mockResolvedValue(restored);
+			const req = { params: { id: '4' } };
+			const res = createResponse();
+
+			await taskController.undoDelete(req, res);
+
+			expect(taskModel.undoDelete).toHaveBeenCalledWith('4', 5);
+			expect(res.json).toHaveBeenCalledWith(restored);
+		});
+
+		it('returns 409 when the model cannot undo the deletion', async () => {
+			const recent = new Date(Date.now() - 2000).toISOString();
+			taskModel.getDeletionState.mockResolvedValue({ id: '5', deleted_at: recent });
+			taskModel.undoDelete.mockResolvedValue(null);
+			const req = { params: { id: '5' } };
+			const res = createResponse();
+
+			await taskController.undoDelete(req, res);
+
+			expect(res.status).toHaveBeenCalledWith(409);
+			expect(res.json).toHaveBeenCalledWith({ error: 'Undo window expired' });
+		});
+
+		it('returns 500 on unexpected errors', async () => {
+			const recent = new Date().toISOString();
+			taskModel.getDeletionState.mockResolvedValue({ id: '6', deleted_at: recent });
+			taskModel.undoDelete.mockRejectedValue(new Error('db error'));
+			const req = { params: { id: '6' } };
+			const res = createResponse();
+
+			await taskController.undoDelete(req, res);
+
+			expect(res.status).toHaveBeenCalledWith(500);
+			expect(res.json).toHaveBeenCalledWith({ error: 'Failed to undo delete' });
 		});
 	});
 });

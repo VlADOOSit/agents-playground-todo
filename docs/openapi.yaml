@@ -4,8 +4,8 @@ info:
   version: 1.0.0
   description: >
     Express + Postgres API for managing TODO tasks. All endpoints are prefixed
-    with `/api`. Pagination on the tasks collection is fixed to 5 items per
-    page.
+    with `/api`. Tasks are soft-deleted; list/count endpoints exclude items
+    with `deleted_at` set, and deletes can be undone for 5 seconds.
 servers:
   - url: http://localhost:3001
     description: Local development
@@ -49,6 +49,14 @@ paths:
           description: >
             Optional sort order. `createdAt` shows newest tasks first. `deadline` shows tasks with a deadline first
             (nearest deadline first) and tasks without deadlines last.
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 5
+          description: Optional page size (defaults to 5, capped at 50).
       responses:
         '200':
           description: Paginated list of tasks.
@@ -165,11 +173,11 @@ paths:
               example:
                 error: Task not found
     delete:
-      summary: Delete a task
+      summary: Soft-delete a task
       tags: [tasks]
       responses:
         '204':
-          description: Task deleted.
+          description: Task soft-deleted (row retained with `deleted_at` set).
         '404':
           description: Task not found.
           content:
@@ -178,6 +186,43 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
               example:
                 error: Task not found
+    post:
+      operationId: undoDeleteTask
+      summary: Undo a recent delete
+      tags: [tasks]
+      description: >
+        Clears `deleted_at` if the task was soft-deleted within the last 5 seconds. If the window expired or the task
+        is not deleted, returns 409.
+      responses:
+        '200':
+          description: Task restored.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          description: Task not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Task not found
+        '409':
+          description: Undo window expired or task is not deleted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                notDeleted:
+                  summary: Not deleted
+                  value:
+                    error: Task is not deleted
+                expired:
+                  summary: Undo window expired
+                  value:
+                    error: Undo window expired
 components:
   schemas:
     TaskStatus:

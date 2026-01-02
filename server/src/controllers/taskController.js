@@ -129,6 +129,40 @@ class TaskController {
 			res.status(500).json({ error: 'Failed to delete task' });
 		}
 	}
+
+	async undoDelete(req, res) {
+		const UNDO_WINDOW_SECONDS = 5;
+
+		try {
+			const { id } = req.params;
+			const deletionState = await taskModel.getDeletionState(id);
+
+			if (!deletionState) {
+				return res.status(404).json({ error: 'Task not found' });
+			}
+
+			if (!deletionState.deleted_at) {
+				return res.status(409).json({ error: 'Task is not deleted' });
+			}
+
+			const deletedAt = new Date(deletionState.deleted_at);
+			const cutoff = Date.now() - UNDO_WINDOW_SECONDS * 1000;
+			if (Number.isNaN(deletedAt.getTime()) || deletedAt.getTime() < cutoff) {
+				return res.status(409).json({ error: 'Undo window expired' });
+			}
+
+			const restoredTask = await taskModel.undoDelete(id, UNDO_WINDOW_SECONDS);
+
+			if (!restoredTask) {
+				return res.status(409).json({ error: 'Undo window expired' });
+			}
+
+			return res.json(restoredTask);
+		} catch (error) {
+			console.error('Error undoing delete', error);
+			return res.status(500).json({ error: 'Failed to undo delete' });
+		}
+	}
 }
 
 module.exports = new TaskController();
