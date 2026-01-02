@@ -1,8 +1,8 @@
 .App {
-  display: block; /* Changed from flex to block for full width */
+  display: block;
   min-height: 100vh;
   width: 100%;
-  max-width: none; /* Remove max-width restriction for full width tasks */
+  max-width: none;
   padding: var(--spacing-lg);
   box-sizing: border-box;
 }
