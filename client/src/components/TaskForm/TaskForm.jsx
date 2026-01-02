@@ -1,42 +1,84 @@
 import { useState } from 'react';
 import tasksApi from '../../api/tasks';
+import { useDraftAutosave } from '../../hooks/useDraftAutosave';
+import { useTaskForm } from '../../hooks/useTaskForm';
+import { DEFAULT_TASK_FORM_DATA } from '../../utils/taskUtils';
 import './TaskForm.css';
 
 const TaskForm = ({ onTaskCreated }) => {
-  const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [newTaskDescription, setNewTaskDescription] = useState('');
-  const [newTaskStatus, setNewTaskStatus] = useState('TODO');
-  const [newTaskDeadline, setNewTaskDeadline] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
-  const handleCreateTask = async (e) => {
-    e.preventDefault();
-    if (isSubmitting) return;
+  const draftKey = 'task-create-draft';
 
-    setIsSubmitting(true);
-    try {
-      const newTask = await tasksApi.createTask({
-        title: newTaskTitle,
-        description: newTaskDescription,
-        status: newTaskStatus,
-        deadline: newTaskDeadline || null,
-      });
-      onTaskCreated(newTask);
-      setNewTaskTitle('');
-      setNewTaskDescription('');
-      setNewTaskStatus('TODO');
-      setNewTaskDeadline('');
-      setIsExpanded(false);
-    } catch (error) {
-      console.error('Error creating task:', error);
-    } finally {
-      setIsSubmitting(false);
+  const {
+    title,
+    description,
+    status,
+    deadline,
+    isSubmitting,
+    setTitle,
+    setDescription,
+    setStatus,
+    setDeadline,
+    resetToDefault,
+    setFormData
+  } = useTaskForm();
+
+  const formData = { title, description, status, deadline };
+
+  const { hasDraft, restoreDraft, clearDraft } = useDraftAutosave(
+    draftKey,
+    formData,
+    DEFAULT_TASK_FORM_DATA,
+    isExpanded,
+    isResetting
+  );
+
+  const showRestoreDraft = isExpanded && hasDraft;
+
+  const handleCreateTask = async (taskData) => {
+    const newTask = await tasksApi.createTask(taskData);
+    clearDraft();
+    onTaskCreated(newTask);
+    resetToDefault();
+    setIsExpanded(false);
+  };
+
+  const handleRestoreDraft = () => {
+    const draft = restoreDraft();
+    if (draft) {
+      setFormData(draft);
     }
   };
 
+  const handleDiscardDraft = () => {
+    clearDraft();
+  };
+
   const toggleForm = () => {
-    setIsExpanded(!isExpanded);
+    const willExpand = !isExpanded;
+    setIsExpanded(willExpand);
+
+    if (!willExpand) {
+      clearDraft();
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (isSubmitting) return;
+
+    try {
+      await handleCreateTask({
+        title,
+        description,
+        status,
+        deadline: deadline || null
+      });
+    } catch (error) {
+      console.error('Error creating task:', error);
+    }
   };
 
   return (
@@ -51,24 +93,47 @@ const TaskForm = ({ onTaskCreated }) => {
       </button>
 
       {isExpanded && (
-        <form onSubmit={handleCreateTask} className="task-form">
+        <form onSubmit={handleSubmit} className="task-form">
+          {showRestoreDraft && (
+            <div className="draft-notice">
+              <p>You have an unsaved draft. Would you like to restore it?</p>
+              <div className="draft-actions">
+                <button
+                  type="button"
+                  onClick={handleRestoreDraft}
+                  className="restore-draft-button"
+                  disabled={isSubmitting}
+                >
+                  Restore Draft
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDiscardDraft}
+                  className="discard-draft-button"
+                  disabled={isSubmitting}
+                >
+                  Discard Draft
+                </button>
+              </div>
+            </div>
+          )}
           <input
             type="text"
             placeholder="Task Title"
-            value={newTaskTitle}
-            onChange={(e) => setNewTaskTitle(e.target.value)}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
             required
             disabled={isSubmitting}
           />
           <textarea
             placeholder="Task Description"
-            value={newTaskDescription}
-            onChange={(e) => setNewTaskDescription(e.target.value)}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
             disabled={isSubmitting}
-          ></textarea>
+          />
           <select
-            value={newTaskStatus}
-            onChange={(e) => setNewTaskStatus(e.target.value)}
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
             disabled={isSubmitting}
           >
             <option value="TODO">TODO</option>
@@ -78,8 +143,8 @@ const TaskForm = ({ onTaskCreated }) => {
           <input
             type="datetime-local"
             placeholder="Deadline (optional)"
-            value={newTaskDeadline}
-            onChange={(e) => setNewTaskDeadline(e.target.value)}
+            value={deadline}
+            onChange={(e) => setDeadline(e.target.value)}
             disabled={isSubmitting}
           />
           <div className="form-actions">

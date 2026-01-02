@@ -1,25 +1,22 @@
 :root {
-  /* Minimalist Color Palette */
-  --primary-bg: #f9f9f9; /* Light background */
-  --secondary-bg: #ffffff; /* Card/component background */
+  --primary-bg: #f9f9f9;
+  --secondary-bg: #ffffff;
   --primary-text: #333333;
   --secondary-text: #666666;
   --border-color: #e0e0e0;
-  --accent-color: #007bff; /* Primary action color */
-  --accent-hover: #0056b3; /* Darker accent on hover */
+  --accent-color: #007bff;
+  --accent-hover: #0056b3;
   --danger-color: #dc3545;
   --danger-hover: #c82333;
   --shadow-light: rgba(0, 0, 0, 0.05);
   --shadow-medium: rgba(0, 0, 0, 0.1);
 
-  /* Typography */
   --font-family-sans: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
   --font-size-base: 16px;
   --line-height-base: 1.5;
   --heading-weight: 600;
   --body-weight: 400;
 
-  /* Spacing */
   --spacing-xs: 4px;
   --spacing-sm: 8px;
   --spacing-md: 16px;
@@ -33,7 +30,6 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Dark Mode Adjustments */
 @media (prefers-color-scheme: dark) {
   :root {
     --primary-bg: #1a1a1a;
@@ -43,7 +39,7 @@
     --border-color: #444444;
     --shadow-light: rgba(255, 255, 255, 0.05);
     --shadow-medium: rgba(255, 255, 255, 0.1);
-    --accent-color: #61dafb; /* A light blue for dark mode accent */
+    --accent-color: #61dafb;
     --accent-hover: #21a1f1;
     --danger-color: #ff6b6b;
     --danger-hover: #e63946;
@@ -65,7 +61,7 @@ body {
 }
 
 #root {
-  max-width: 1600px; /* Much wider for more content */
+  max-width: 1600px;
   margin: 0 auto;
   padding: var(--spacing-xl);
   text-align: center;
@@ -74,7 +70,7 @@ body {
 }
 
 h1 {
-  font-size: 2.5em; /* Slightly smaller for minimalism */
+  font-size: 2.5em;
   line-height: 1.1;
   color: var(--primary-text);
   margin-bottom: var(--spacing-xl);
@@ -95,7 +91,7 @@ select {
   font-size: var(--font-size-base);
   color: var(--primary-text);
   background-color: var(--secondary-bg);
-  box-sizing: border-box; /* Include padding in width */
+  box-sizing: border-box;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
@@ -108,7 +104,6 @@ select:focus {
   outline: none;
 }
 
-/* Datetime input specific styling */
 input[type="datetime-local"] {
   cursor: pointer;
 }
@@ -130,7 +125,7 @@ input[type="datetime-local"]:focus::-webkit-calendar-picker-indicator {
 
 button {
   border-radius: 5px;
-  border: none; /* Minimalist buttons have no border */
+  border: none;
   padding: var(--spacing-sm) var(--spacing-md);
   font-size: var(--font-size-base);
   font-weight: var(--heading-weight);
@@ -159,7 +154,6 @@ button.danger:hover {
   background-color: var(--danger-hover);
 }
 
-/* Link styles */
 a {
   font-weight: var(--body-weight);
   color: var(--accent-color);

@@ -28,31 +28,30 @@
   opacity: 0.8;
 }
 
-/* Status color indicators */
 .task-item.status-todo::before {
-  background-color: #dc3545; /* Red for TODO */
+  background-color: #dc3545;
 }
 
 .task-item.status-in_progress::before {
-  background-color: #ffc107; /* Yellow for IN_PROGRESS */
+  background-color: #ffc107;
 }
 
 .task-item.status-done::before {
-  background-color: #28a745; /* Green for DONE */
+  background-color: #28a745;
 }
 
 .task-item.overdue {
-  border: 2px solid #dc3545; /* Red border for overdue tasks */
+  border: 2px solid #dc3545;
 }
 
 .task-item.overdue::before {
-  background-color: #dc3545; /* Red indicator for overdue */
-  opacity: 1; /* Always visible for overdue tasks */
+  background-color: #dc3545;
+  opacity: 1;
 }
 
 .task-item:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px var(--shadow-medium); /* Re-add box shadow on hover */
+  box-shadow: 0 4px 12px var(--shadow-medium);
 }
 
 .task-item:hover::before {
@@ -72,7 +71,7 @@
   flex-direction: column;
   gap: var(--spacing-xs);
   flex: 1;
-  min-width: 0; /* Allow flex shrinking */
+  min-width: 0;
 }
 
 .task-item-header h3 {
@@ -82,8 +81,8 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: calc(100% - 120px); /* Adjusted for more title space, providing space for buttons */
-  margin-right: var(--spacing-sm); /* Add some space between title and buttons */
+  max-width: calc(100% - 120px);
+  margin-right: var(--spacing-sm);
 }
 
 .task-item-actions {
@@ -126,7 +125,6 @@
   color: var(--primary-text);
 }
 
-/* Deadline Badge Styles */
 .deadline-badge {
   display: flex;
   align-items: center;
@@ -256,6 +254,67 @@
   margin-top: var(--spacing-md);
 }
 
+.draft-notice {
+  background-color: var(--warning-bg, #fff3cd);
+  border: 1px solid var(--warning-border, #ffeaa7);
+  border-radius: 6px;
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.draft-notice p {
+  margin: 0;
+  color: var(--warning-text, #856404);
+  font-size: var(--font-size-sm);
+  font-weight: var(--body-weight);
+}
+
+.draft-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.restore-draft-button {
+  background-color: var(--success-color, #28a745);
+  color: white;
+  border: none;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: 4px;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.restore-draft-button:hover:not(:disabled) {
+  background-color: var(--success-hover, #218838);
+}
+
+.discard-draft-button {
+  background-color: transparent;
+  color: var(--danger-color, #dc3545);
+  border: 1px solid var(--danger-color, #dc3545);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: 4px;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.discard-draft-button:hover:not(:disabled) {
+  background-color: var(--danger-color, #dc3545);
+  color: white;
+}
+
+.restore-draft-button:disabled,
+.discard-draft-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 @media (max-width: 600px) {
   .task-item-header {
     flex-direction: column;
@@ -274,6 +333,16 @@
 
   .edit-form-actions {
     flex-direction: column;
+    width: 100%;
+  }
+
+  .draft-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .restore-draft-button,
+  .discard-draft-button {
     width: 100%;
   }
 }
