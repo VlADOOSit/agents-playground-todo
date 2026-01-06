@@ -2,7 +2,7 @@
 // This file runs before each test suite
 
 // Mock the database pool to prevent actual database connections during unit tests
-jest.mock('../db/pool', () => ({
+jest.mock('../src/db/pool', () => ({
     query: jest.fn()
 }));
 

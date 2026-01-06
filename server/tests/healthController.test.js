@@ -1,4 +1,4 @@
-const HealthController = require('../controllers/healthController');
+const HealthController = require('../src/controllers/healthController');
 
 describe('HealthController', () => {
     let mockReq, mockRes;
