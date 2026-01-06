@@ -5,8 +5,8 @@ module.exports = {
         '!**/node_modules/**',
         '!**/coverage/**',
         '!jest.config.js',
-        '!db/migrate.js',
-        '!app.js'
+        '!src/db/migrate.js',
+        '!src/app.js'
     ],
     coverageDirectory: 'coverage',
     coverageReporters: ['text', 'lcov', 'html'],

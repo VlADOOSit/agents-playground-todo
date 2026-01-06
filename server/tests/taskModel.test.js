@@ -1,7 +1,7 @@
-const TaskModel = require('../models/taskModel');
-const pool = require('../db/pool');
+const TaskModel = require('../src/models/taskModel');
+const pool = require('../src/db/pool');
 
-jest.mock('../db/pool');
+jest.mock('../src/db/pool');
 
 describe('TaskModel', () => {
     beforeEach(() => {

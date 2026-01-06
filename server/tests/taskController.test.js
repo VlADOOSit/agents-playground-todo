@@ -1,7 +1,7 @@
-const TaskController = require('../controllers/taskController');
-const TaskModel = require('../models/taskModel');
+const TaskController = require('../src/controllers/taskController');
+const TaskModel = require('../src/models/taskModel');
 
-jest.mock('../models/taskModel');
+jest.mock('../src/models/taskModel');
 
 describe('TaskController', () => {
     let mockReq, mockRes;
