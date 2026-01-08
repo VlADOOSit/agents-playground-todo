@@ -80,3 +80,5 @@ docker run --name todo-postgres -e POSTGRES_DB=todo -e POSTGRES_USER=postgres -e
 ## Health check
 
 The API exposes a health check at `GET /api/health` returning `{ "status": "ok" }`.
+
+deploy
