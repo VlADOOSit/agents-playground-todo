@@ -3,9 +3,11 @@ const cors = require('cors');
 const healthRoutes = require('./routes/healthRoutes');
 const taskRoutes = require('./routes/taskRoutes');
 
+const allowedOrigin = process.env.FRONTEND_URL || 'http://localhost:5173';
+
 const app = express();
 app.use(cors({
-    origin: 'http://localhost:5173',
+    origin: allowedOrigin,
     credentials: true,
 }));
 
