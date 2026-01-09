@@ -81,4 +81,4 @@ docker run --name todo-postgres -e POSTGRES_DB=todo -e POSTGRES_USER=postgres -e
 
 The API exposes a health check at `GET /api/health` returning `{ "status": "ok" }`.
 
-deploy
+Vercel deploy https://agents-playground-todo.vercel.app/
