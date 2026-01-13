@@ -1,6 +1,5 @@
 const TaskModel = require('../src/models/taskModel');
 const pool = require('../src/db/pool');
-const ApiError = require('../src/utils/ApiError');
 
 jest.mock('../src/db/pool');
 
