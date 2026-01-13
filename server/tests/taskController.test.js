@@ -11,6 +11,7 @@ jest.mock('../src/models/taskModel', () => ({
 
 const taskModel = require('../src/models/taskModel');
 const taskController = require('../src/controllers/taskController');
+const AppError = require('../src/utils/AppError');
 
 const createResponse = () => {
 	const res = {};
@@ -20,16 +21,24 @@ const createResponse = () => {
 	return res;
 };
 
+const expectAppError = (next, message, statusCode) => {
+	expect(next).toHaveBeenCalledTimes(1);
+	const [error] = next.mock.calls[0];
+	expect(error).toBeInstanceOf(AppError);
+	expect(error.message).toBe(message);
+	expect(error.statusCode).toBe(statusCode);
+};
+
 describe('TaskController', () => {
 	describe('listTasks', () => {
 		it('returns 400 for an invalid status filter', async () => {
 			const req = { query: { status: 'INVALID' } };
 			const res = createResponse();
+			const next = jest.fn();
 
-			await taskController.listTasks(req, res);
+			await taskController.listTasks(req, res, next);
 
-			expect(res.status).toHaveBeenCalledWith(400);
-			expect(res.json).toHaveBeenCalledWith({ error: 'Invalid status value' });
+			expectAppError(next, 'Invalid status value', 400);
 			expect(taskModel.getAll).not.toHaveBeenCalled();
 			expect(taskModel.getTotalCount).not.toHaveBeenCalled();
 		});
@@ -37,11 +46,11 @@ describe('TaskController', () => {
 		it('returns 400 for an invalid sort value', async () => {
 			const req = { query: { sort: 'DROP TABLE' } };
 			const res = createResponse();
+			const next = jest.fn();
 
-			await taskController.listTasks(req, res);
+			await taskController.listTasks(req, res, next);
 
-			expect(res.status).toHaveBeenCalledWith(400);
-			expect(res.json).toHaveBeenCalledWith({ error: 'Invalid sort value' });
+			expectAppError(next, 'Invalid sort value', 400);
 			expect(taskModel.getAll).not.toHaveBeenCalled();
 			expect(taskModel.getTotalCount).not.toHaveBeenCalled();
 		});
@@ -52,8 +61,9 @@ describe('TaskController', () => {
 			taskModel.getTotalCount.mockResolvedValue(6);
 			const req = { query: {} };
 			const res = createResponse();
+			const next = jest.fn();
 
-			await taskController.listTasks(req, res);
+			await taskController.listTasks(req, res, next);
 
 			expect(taskModel.getAll).toHaveBeenCalledWith({ limit: 5, offset: 0, status: undefined, sort: 'createdAt' });
 			expect(taskModel.getTotalCount).toHaveBeenCalledWith(undefined);
@@ -64,6 +74,7 @@ describe('TaskController', () => {
 				totalCount: 6,
 				limit: 5,
 			});
+			expect(next).not.toHaveBeenCalled();
 		});
 
 		it('calculates pagination and filtering when page and status are provided', async () => {
@@ -71,8 +82,9 @@ describe('TaskController', () => {
 			taskModel.getTotalCount.mockResolvedValue(0);
 			const req = { query: { page: '3', status: 'TODO' } };
 			const res = createResponse();
+			const next = jest.fn();
 
-			await taskController.listTasks(req, res);
+			await taskController.listTasks(req, res, next);
 
 			expect(taskModel.getAll).toHaveBeenCalledWith({ limit: 5, offset: 10, status: 'TODO', sort: 'createdAt' });
 			expect(taskModel.getTotalCount).toHaveBeenCalledWith('TODO');
@@ -83,6 +95,7 @@ describe('TaskController', () => {
 				totalCount: 0,
 				limit: 5,
 			});
+			expect(next).not.toHaveBeenCalled();
 		});
 
 		it('passes the requested sort option through', async () => {
@@ -90,10 +103,12 @@ describe('TaskController', () => {
 			taskModel.getTotalCount.mockResolvedValue(0);
 			const req = { query: { sort: 'deadline' } };
 			const res = createResponse();
+			const next = jest.fn();
 
-			await taskController.listTasks(req, res);
+			await taskController.listTasks(req, res, next);
 
 			expect(taskModel.getAll).toHaveBeenCalledWith({ limit: 5, offset: 0, status: undefined, sort: 'deadline' });
+			expect(next).not.toHaveBeenCalled();
 		});
 
 		it('uses a custom per-page limit when provided', async () => {
@@ -101,8 +116,9 @@ describe('TaskController', () => {
 			taskModel.getTotalCount.mockResolvedValue(12);
 			const req = { query: { page: '2', limit: '10' } };
 			const res = createResponse();
+			const next = jest.fn();
 
-			await taskController.listTasks(req, res);
+			await taskController.listTasks(req, res, next);
 
 			expect(taskModel.getAll).toHaveBeenCalledWith({ limit: 10, offset: 10, status: undefined, sort: 'createdAt' });
 			expect(res.json).toHaveBeenCalledWith({
@@ -112,20 +128,18 @@ describe('TaskController', () => {
 				totalCount: 12,
 				limit: 10,
 			});
+			expect(next).not.toHaveBeenCalled();
 		});
 
 		it('responds with 500 on unexpected errors', async () => {
-			const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
 			taskModel.getAll.mockRejectedValue(new Error('boom'));
 			const req = { query: {} };
 			const res = createResponse();
+			const next = jest.fn();
 
-			await taskController.listTasks(req, res);
+			await taskController.listTasks(req, res, next);
 
-			expect(consoleSpy).toHaveBeenCalled();
-			expect(res.status).toHaveBeenCalledWith(500);
-			expect(res.json).toHaveBeenCalledWith({ error: 'Failed to fetch tasks' });
-			consoleSpy.mockRestore();
+			expectAppError(next, 'Failed to fetch tasks', 500);
 		});
 	});
 
@@ -134,11 +148,11 @@ describe('TaskController', () => {
 			taskModel.getById.mockResolvedValue(null);
 			const req = { params: { id: '123' } };
 			const res = createResponse();
+			const next = jest.fn();
 
-			await taskController.getTask(req, res);
+			await taskController.getTask(req, res, next);
 
-			expect(res.status).toHaveBeenCalledWith(404);
-			expect(res.json).toHaveBeenCalledWith({ error: 'Task not found' });
+			expectAppError(next, 'Task not found', 404);
 		});
 
 		it('returns a task when found', async () => {
@@ -146,10 +160,12 @@ describe('TaskController', () => {
 			taskModel.getById.mockResolvedValue(task);
 			const req = { params: { id: '1' } };
 			const res = createResponse();
+			const next = jest.fn();
 
-			await taskController.getTask(req, res);
+			await taskController.getTask(req, res, next);
 
 			expect(res.json).toHaveBeenCalledWith(task);
+			expect(next).not.toHaveBeenCalled();
 		});
 	});
 
@@ -157,33 +173,33 @@ describe('TaskController', () => {
 		it('requires a non-empty title', async () => {
 			const req = { body: { title: '   ' } };
 			const res = createResponse();
+			const next = jest.fn();
 
-			await taskController.createTask(req, res);
+			await taskController.createTask(req, res, next);
 
-			expect(res.status).toHaveBeenCalledWith(400);
-			expect(res.json).toHaveBeenCalledWith({ error: 'Title is required' });
+			expectAppError(next, 'Title is required', 400);
 			expect(taskModel.create).not.toHaveBeenCalled();
 		});
 
 		it('rejects invalid statuses', async () => {
 			const req = { body: { title: 'Title', status: 'NOT_REAL' } };
 			const res = createResponse();
+			const next = jest.fn();
 
-			await taskController.createTask(req, res);
+			await taskController.createTask(req, res, next);
 
-			expect(res.status).toHaveBeenCalledWith(400);
-			expect(res.json).toHaveBeenCalledWith({ error: 'Invalid status value' });
+			expectAppError(next, 'Invalid status value', 400);
 			expect(taskModel.create).not.toHaveBeenCalled();
 		});
 
 		it('rejects invalid deadline format', async () => {
 			const req = { body: { title: 'Title', deadline: '2025-01-01 10:00' } };
 			const res = createResponse();
+			const next = jest.fn();
 
-			await taskController.createTask(req, res);
+			await taskController.createTask(req, res, next);
 
-			expect(res.status).toHaveBeenCalledWith(400);
-			expect(res.json).toHaveBeenCalledWith({ error: 'Deadline must be an ISO datetime string' });
+			expectAppError(next, 'Deadline must be an ISO datetime string', 400);
 			expect(taskModel.create).not.toHaveBeenCalled();
 		});
 
@@ -192,8 +208,9 @@ describe('TaskController', () => {
 			taskModel.create.mockResolvedValue(newTask);
 			const req = { body: { title: 'New', description: 'desc' } };
 			const res = createResponse();
+			const next = jest.fn();
 
-			await taskController.createTask(req, res);
+			await taskController.createTask(req, res, next);
 
 			expect(taskModel.create).toHaveBeenCalledWith({
 				title: 'New',
@@ -203,6 +220,7 @@ describe('TaskController', () => {
 			});
 			expect(res.status).toHaveBeenCalledWith(201);
 			expect(res.json).toHaveBeenCalledWith(newTask);
+			expect(next).not.toHaveBeenCalled();
 		});
 
 		it('trims and forwards a valid ISO deadline', async () => {
@@ -215,8 +233,9 @@ describe('TaskController', () => {
 			taskModel.create.mockResolvedValue(newTask);
 			const req = { body: { title: 'With deadline', deadline: ' 2025-02-01T10:00:00Z  ' } };
 			const res = createResponse();
+			const next = jest.fn();
 
-			await taskController.createTask(req, res);
+			await taskController.createTask(req, res, next);
 
 			expect(taskModel.create).toHaveBeenCalledWith({
 				title: 'With deadline',
@@ -226,6 +245,7 @@ describe('TaskController', () => {
 			});
 			expect(res.status).toHaveBeenCalledWith(201);
 			expect(res.json).toHaveBeenCalledWith(newTask);
+			expect(next).not.toHaveBeenCalled();
 		});
 	});
 
@@ -233,33 +253,33 @@ describe('TaskController', () => {
 		it('rejects empty title when provided', async () => {
 			const req = { params: { id: '1' }, body: { title: '' } };
 			const res = createResponse();
+			const next = jest.fn();
 
-			await taskController.updateTask(req, res);
+			await taskController.updateTask(req, res, next);
 
-			expect(res.status).toHaveBeenCalledWith(400);
-			expect(res.json).toHaveBeenCalledWith({ error: 'Title cannot be empty' });
+			expectAppError(next, 'Title cannot be empty', 400);
 			expect(taskModel.update).not.toHaveBeenCalled();
 		});
 
 		it('rejects invalid statuses when provided', async () => {
 			const req = { params: { id: '1' }, body: { status: '???' } };
 			const res = createResponse();
+			const next = jest.fn();
 
-			await taskController.updateTask(req, res);
+			await taskController.updateTask(req, res, next);
 
-			expect(res.status).toHaveBeenCalledWith(400);
-			expect(res.json).toHaveBeenCalledWith({ error: 'Invalid status value' });
+			expectAppError(next, 'Invalid status value', 400);
 			expect(taskModel.update).not.toHaveBeenCalled();
 		});
 
 		it('rejects invalid deadline when provided', async () => {
 			const req = { params: { id: '1' }, body: { deadline: '2025-01-01 10:00' } };
 			const res = createResponse();
+			const next = jest.fn();
 
-			await taskController.updateTask(req, res);
+			await taskController.updateTask(req, res, next);
 
-			expect(res.status).toHaveBeenCalledWith(400);
-			expect(res.json).toHaveBeenCalledWith({ error: 'Deadline must be an ISO datetime string' });
+			expectAppError(next, 'Deadline must be an ISO datetime string', 400);
 			expect(taskModel.update).not.toHaveBeenCalled();
 		});
 
@@ -267,11 +287,11 @@ describe('TaskController', () => {
 			taskModel.update.mockResolvedValue(null);
 			const req = { params: { id: '9' }, body: { title: 'Updated' } };
 			const res = createResponse();
+			const next = jest.fn();
 
-			await taskController.updateTask(req, res);
+			await taskController.updateTask(req, res, next);
 
-			expect(res.status).toHaveBeenCalledWith(404);
-			expect(res.json).toHaveBeenCalledWith({ error: 'Task not found' });
+			expectAppError(next, 'Task not found', 404);
 		});
 
 		it('returns the updated task on success', async () => {
@@ -279,8 +299,9 @@ describe('TaskController', () => {
 			taskModel.update.mockResolvedValue(updatedTask);
 			const req = { params: { id: '2' }, body: { title: 'Updated title', status: 'DONE' } };
 			const res = createResponse();
+			const next = jest.fn();
 
-			await taskController.updateTask(req, res);
+			await taskController.updateTask(req, res, next);
 
 			expect(taskModel.update).toHaveBeenCalledWith('2', {
 				title: 'Updated title',
@@ -289,6 +310,7 @@ describe('TaskController', () => {
 				deadline: undefined,
 			});
 			expect(res.json).toHaveBeenCalledWith(updatedTask);
+			expect(next).not.toHaveBeenCalled();
 		});
 
 		it('clears the deadline when null or empty is provided', async () => {
@@ -296,8 +318,9 @@ describe('TaskController', () => {
 			taskModel.update.mockResolvedValue(updatedTask);
 			const req = { params: { id: '5' }, body: { deadline: '   ' } };
 			const res = createResponse();
+			const next = jest.fn();
 
-			await taskController.updateTask(req, res);
+			await taskController.updateTask(req, res, next);
 
 			expect(taskModel.update).toHaveBeenCalledWith('5', {
 				title: undefined,
@@ -306,6 +329,7 @@ describe('TaskController', () => {
 				deadline: null,
 			});
 			expect(res.json).toHaveBeenCalledWith(updatedTask);
+			expect(next).not.toHaveBeenCalled();
 		});
 	});
 
@@ -314,22 +338,24 @@ describe('TaskController', () => {
 			taskModel.delete.mockResolvedValue(false);
 			const req = { params: { id: '3' } };
 			const res = createResponse();
+			const next = jest.fn();
 
-			await taskController.deleteTask(req, res);
+			await taskController.deleteTask(req, res, next);
 
-			expect(res.status).toHaveBeenCalledWith(404);
-			expect(res.json).toHaveBeenCalledWith({ error: 'Task not found' });
+			expectAppError(next, 'Task not found', 404);
 		});
 
 		it('returns 204 on successful deletion', async () => {
 			taskModel.delete.mockResolvedValue(true);
 			const req = { params: { id: '3' } };
 			const res = createResponse();
+			const next = jest.fn();
 
-			await taskController.deleteTask(req, res);
+			await taskController.deleteTask(req, res, next);
 
 			expect(res.status).toHaveBeenCalledWith(204);
 			expect(res.send).toHaveBeenCalled();
+			expect(next).not.toHaveBeenCalled();
 		});
 	});
 
@@ -338,23 +364,23 @@ describe('TaskController', () => {
 			taskModel.getDeletionState.mockResolvedValue(null);
 			const req = { params: { id: '99' } };
 			const res = createResponse();
+			const next = jest.fn();
 
-			await taskController.undoDelete(req, res);
+			await taskController.undoDelete(req, res, next);
 
 			expect(taskModel.getDeletionState).toHaveBeenCalledWith('99');
-			expect(res.status).toHaveBeenCalledWith(404);
-			expect(res.json).toHaveBeenCalledWith({ error: 'Task not found' });
+			expectAppError(next, 'Task not found', 404);
 		});
 
 		it('returns 409 when the task is not deleted', async () => {
 			taskModel.getDeletionState.mockResolvedValue({ id: '1', deleted_at: null });
 			const req = { params: { id: '1' } };
 			const res = createResponse();
+			const next = jest.fn();
 
-			await taskController.undoDelete(req, res);
+			await taskController.undoDelete(req, res, next);
 
-			expect(res.status).toHaveBeenCalledWith(409);
-			expect(res.json).toHaveBeenCalledWith({ error: 'Task is not deleted' });
+			expectAppError(next, 'Task is not deleted', 409);
 			expect(taskModel.undoDelete).not.toHaveBeenCalled();
 		});
 
@@ -363,11 +389,11 @@ describe('TaskController', () => {
 			taskModel.getDeletionState.mockResolvedValue({ id: '1', deleted_at: past });
 			const req = { params: { id: '1' } };
 			const res = createResponse();
+			const next = jest.fn();
 
-			await taskController.undoDelete(req, res);
+			await taskController.undoDelete(req, res, next);
 
-			expect(res.status).toHaveBeenCalledWith(409);
-			expect(res.json).toHaveBeenCalledWith({ error: 'Undo window expired' });
+			expectAppError(next, 'Undo window expired', 409);
 			expect(taskModel.undoDelete).not.toHaveBeenCalled();
 		});
 
@@ -378,11 +404,13 @@ describe('TaskController', () => {
 			taskModel.undoDelete.mockResolvedValue(restored);
 			const req = { params: { id: '4' } };
 			const res = createResponse();
+			const next = jest.fn();
 
-			await taskController.undoDelete(req, res);
+			await taskController.undoDelete(req, res, next);
 
 			expect(taskModel.undoDelete).toHaveBeenCalledWith('4', 5);
 			expect(res.json).toHaveBeenCalledWith(restored);
+			expect(next).not.toHaveBeenCalled();
 		});
 
 		it('returns 409 when the model cannot undo the deletion', async () => {
@@ -391,11 +419,11 @@ describe('TaskController', () => {
 			taskModel.undoDelete.mockResolvedValue(null);
 			const req = { params: { id: '5' } };
 			const res = createResponse();
+			const next = jest.fn();
 
-			await taskController.undoDelete(req, res);
+			await taskController.undoDelete(req, res, next);
 
-			expect(res.status).toHaveBeenCalledWith(409);
-			expect(res.json).toHaveBeenCalledWith({ error: 'Undo window expired' });
+			expectAppError(next, 'Undo window expired', 409);
 		});
 
 		it('returns 500 on unexpected errors', async () => {
@@ -404,11 +432,11 @@ describe('TaskController', () => {
 			taskModel.undoDelete.mockRejectedValue(new Error('db error'));
 			const req = { params: { id: '6' } };
 			const res = createResponse();
+			const next = jest.fn();
 
-			await taskController.undoDelete(req, res);
+			await taskController.undoDelete(req, res, next);
 
-			expect(res.status).toHaveBeenCalledWith(500);
-			expect(res.json).toHaveBeenCalledWith({ error: 'Failed to undo delete' });
+			expectAppError(next, 'Failed to undo delete', 500);
 		});
 	});
 });
