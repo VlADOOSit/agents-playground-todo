@@ -1,7 +1,25 @@
 openapi: 3.0.3
 info:
   title: Todo API
-  description: A REST API for managing tasks in a todo application
+  description: |
+    A REST API for managing tasks in a todo application.
+
+    ## Error Handling
+    All API errors follow a consistent format:
+    ```json
+    {
+      "success": false,
+      "error": {
+        "status": "fail", // or "error"
+        "statusCode": 400, // HTTP status code
+        "message": "Human-readable error message",
+        "stack": "Error stack trace (development only)"
+      }
+    }
+    ```
+
+    - `fail` status: Client errors (4xx) - invalid input, not found, etc.
+    - `error` status: Server errors (5xx) - database errors, internal issues, etc.
   version: 1.0.0
   contact:
     name: Todo API Support
@@ -31,6 +49,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error:
+                  status: "error"
+                  statusCode: 500
+                  message: "Internal server error"
 
   /tasks:
     get:
@@ -84,6 +108,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error:
+                  status: "error"
+                  statusCode: 500
+                  message: "Database error occurred while fetching tasks"
 
     post:
       summary: Create a new task
@@ -104,17 +134,29 @@ paths:
               schema:
                 $ref: '#/components/schemas/Task'
         '400':
-          description: Bad request - invalid input data
+          description: Bad request - invalid input data (e.g., invalid deadline format)
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error:
+                  status: "fail"
+                  statusCode: 400
+                  message: "Invalid deadline format. Must be a valid ISO date string."
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error:
+                  status: "error"
+                  statusCode: 500
+                  message: "Database error occurred"
 
   /tasks/{id}:
     parameters:
@@ -144,12 +186,24 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error:
+                  status: "fail"
+                  statusCode: 404
+                  message: "Task not found"
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error:
+                  status: "error"
+                  statusCode: 500
+                  message: "Database error occurred while fetching task"
 
     put:
       summary: Update a task
@@ -170,23 +224,41 @@ paths:
               schema:
                 $ref: '#/components/schemas/Task'
         '400':
-          description: Bad request - invalid input data
+          description: Bad request - invalid input data (e.g., invalid deadline format)
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error:
+                  status: "fail"
+                  statusCode: 400
+                  message: "Invalid deadline format. Must be a valid ISO date string."
         '404':
           description: Task not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error:
+                  status: "fail"
+                  statusCode: 404
+                  message: "Task not found"
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error:
+                  status: "error"
+                  statusCode: 500
+                  message: "Database error occurred while updating task"
 
     delete:
       summary: Soft delete a task
@@ -210,12 +282,24 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error:
+                  status: "fail"
+                  statusCode: 404
+                  message: "Task not found"
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error:
+                  status: "error"
+                  statusCode: 500
+                  message: "Database error occurred while deleting task"
 
     patch:
       summary: Restore a soft-deleted task
@@ -235,12 +319,24 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error:
+                  status: "fail"
+                  statusCode: 404
+                  message: "Task not found"
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error:
+                  status: "error"
+                  statusCode: 500
+                  message: "Database error occurred while restoring task"
 
   /tasks/{id}/permanent:
     parameters:
@@ -274,12 +370,24 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error:
+                  status: "fail"
+                  statusCode: 404
+                  message: "Task not found"
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error:
+                  status: "error"
+                  statusCode: 500
+                  message: "Database error occurred while permanently deleting task"
 
   /tasks/cleanup:
     delete:
@@ -314,6 +422,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error:
+                  status: "error"
+                  statusCode: 500
+                  message: "Database error occurred while fetching deleted tasks"
 
 components:
   schemas:
@@ -446,11 +560,42 @@ components:
 
     ErrorResponse:
       type: object
+      required:
+        - success
+        - error
       properties:
+        success:
+          type: boolean
+          description: Always false for error responses
+          example: false
+        error:
+          $ref: '#/components/schemas/ApiError'
+      description: Standard API error response format
+
+    ApiError:
+      type: object
+      required:
+        - status
+        - statusCode
+        - message
+      properties:
+        status:
+          type: string
+          enum: ["fail", "error"]
+          description: Error status type (fail for client errors, error for server errors)
+          example: "fail"
+        statusCode:
+          type: integer
+          description: HTTP status code
+          example: 400
         message:
           type: string
-          description: Error message
-          example: "Internal server error"
+          description: Human-readable error message
+          example: "Invalid deadline format. Must be a valid ISO date string."
+        stack:
+          type: string
+          description: Error stack trace (only included in development mode)
+          example: "Error: Invalid deadline format...\n    at TaskController.createTask (taskController.js:10:5)"
 
   securitySchemes:
     bearerAuth:
