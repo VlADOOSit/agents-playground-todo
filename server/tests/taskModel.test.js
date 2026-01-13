@@ -33,12 +33,12 @@ describe('TaskModel', () => {
             expect(result).toEqual(mockTask);
         });
 
-        test('should handle database errors', async () => {
-            const error = new Error('Database connection failed');
-            pool.query.mockRejectedValue(error);
+        test('should handle database errors and throw ApiError', async () => {
+            const dbError = new Error('Database connection failed');
+            pool.query.mockRejectedValue(dbError);
 
             await expect(TaskModel.createTask('Test Task', 'Test Description', 'pending', null))
-                .rejects.toThrow('Database connection failed');
+                .rejects.toThrow('Database error occurred');
         });
     });
 
@@ -243,6 +243,11 @@ describe('TaskModel', () => {
             );
             expect(result).toEqual(mockTask);
         });
+
+        test('should throw ApiError for invalid id format', async () => {
+            await expect(TaskModel.getTaskById('abc'))
+                .rejects.toThrow('Invalid task ID format');
+        });
     });
 
     describe('updateTask', () => {
@@ -359,11 +364,17 @@ describe('TaskModel', () => {
             expect(result).toEqual({ id: 1 });
         });
 
-        test('should handle database errors', async () => {
-            const error = new Error('Database error');
-            pool.query.mockRejectedValue(error);
+        test('should throw ApiError for invalid id format', async () => {
+            await expect(TaskModel.softDeleteTask('abc'))
+                .rejects.toThrow('Invalid task ID format');
+        });
 
-            await expect(TaskModel.softDeleteTask(1)).rejects.toThrow('Database error');
+        test('should handle database errors and throw ApiError', async () => {
+            const dbError = new Error('Database error');
+            pool.query.mockRejectedValue(dbError);
+
+            await expect(TaskModel.softDeleteTask(1))
+                .rejects.toThrow('Database error occurred while deleting task');
         });
     });
 
@@ -428,11 +439,17 @@ describe('TaskModel', () => {
             expect(result).toEqual(mockTask);
         });
 
-        test('should handle database errors', async () => {
-            const error = new Error('Database error');
-            pool.query.mockRejectedValue(error);
+        test('should throw ApiError for invalid id format', async () => {
+            await expect(TaskModel.restoreTask('abc'))
+                .rejects.toThrow('Invalid task ID format');
+        });
 
-            await expect(TaskModel.restoreTask(1)).rejects.toThrow('Database error');
+        test('should handle database errors and throw ApiError', async () => {
+            const dbError = new Error('Database error');
+            pool.query.mockRejectedValue(dbError);
+
+            await expect(TaskModel.restoreTask(1))
+                .rejects.toThrow('Database error occurred while restoring task');
         });
     });
 
@@ -479,11 +496,17 @@ describe('TaskModel', () => {
             expect(result).toEqual({ id: 1 });
         });
 
-        test('should handle database errors', async () => {
-            const error = new Error('Database error');
-            pool.query.mockRejectedValue(error);
+        test('should throw ApiError for invalid id format', async () => {
+            await expect(TaskModel.permanentDeleteTask('abc'))
+                .rejects.toThrow('Invalid task ID format');
+        });
 
-            await expect(TaskModel.permanentDeleteTask(1)).rejects.toThrow('Database error');
+        test('should handle database errors and throw ApiError', async () => {
+            const dbError = new Error('Database error');
+            pool.query.mockRejectedValue(dbError);
+
+            await expect(TaskModel.permanentDeleteTask(1))
+                .rejects.toThrow('Database error occurred while permanently deleting task');
         });
     });
 

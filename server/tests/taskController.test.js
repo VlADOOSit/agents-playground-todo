@@ -1,10 +1,11 @@
 const TaskController = require('../src/controllers/taskController');
 const TaskModel = require('../src/models/taskModel');
+const ApiError = require('../src/utils/ApiError');
 
 jest.mock('../src/models/taskModel');
 
 describe('TaskController', () => {
-    let mockReq, mockRes;
+    let mockReq, mockRes, mockNext;
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -13,6 +14,8 @@ describe('TaskController', () => {
             status: jest.fn().mockReturnThis(),
             json: jest.fn().mockReturnThis()
         };
+
+        mockNext = jest.fn();
     });
 
     describe('createTask', () => {
@@ -36,14 +39,15 @@ describe('TaskController', () => {
 
             TaskModel.createTask.mockResolvedValue(newTask);
 
-            await TaskController.createTask(mockReq, mockRes);
+            await TaskController.createTask(mockReq, mockRes, mockNext);
 
             expect(TaskModel.createTask).toHaveBeenCalledWith('Test Task', 'Test Description', 'pending', '2025-12-31T23:59:59Z');
             expect(mockRes.status).toHaveBeenCalledWith(201);
             expect(mockRes.json).toHaveBeenCalledWith(newTask);
+            expect(mockNext).not.toHaveBeenCalled();
         });
 
-        test('should handle errors and return 500 status', async () => {
+        test('should handle errors and call next with error', async () => {
             mockReq = {
                 body: {
                     title: 'Test Task',
@@ -53,16 +57,17 @@ describe('TaskController', () => {
                 }
             };
 
-            const error = new Error('Database error');
+            const error = new ApiError(500, 'Database error occurred');
             TaskModel.createTask.mockRejectedValue(error);
 
-            await TaskController.createTask(mockReq, mockRes);
+            await TaskController.createTask(mockReq, mockRes, mockNext);
 
-            expect(mockRes.status).toHaveBeenCalledWith(500);
-            expect(mockRes.json).toHaveBeenCalledWith({ message: 'Error creating task' });
+            expect(mockNext).toHaveBeenCalledWith(error);
+            expect(mockRes.status).not.toHaveBeenCalled();
+            expect(mockRes.json).not.toHaveBeenCalled();
         });
 
-        test('should return 400 for invalid deadline format', async () => {
+        test('should call next with ApiError for invalid deadline format', async () => {
             mockReq = {
                 body: {
                     title: 'Test Task',
@@ -72,10 +77,11 @@ describe('TaskController', () => {
                 }
             };
 
-            await TaskController.createTask(mockReq, mockRes);
+            await TaskController.createTask(mockReq, mockRes, mockNext);
 
-            expect(mockRes.status).toHaveBeenCalledWith(400);
-            expect(mockRes.json).toHaveBeenCalledWith({ message: 'Invalid deadline format. Must be a valid ISO date string.' });
+            expect(mockNext).toHaveBeenCalledWith(new ApiError(400, 'Invalid deadline format. Must be a valid ISO date string.'));
+            expect(mockRes.status).not.toHaveBeenCalled();
+            expect(mockRes.json).not.toHaveBeenCalled();
         });
     });
 
@@ -93,7 +99,7 @@ describe('TaskController', () => {
             TaskModel.getAllTasks.mockResolvedValue(mockTasks);
             TaskModel.getTasksCount.mockResolvedValue(10);
 
-            await TaskController.getAllTasks(mockReq, mockRes);
+            await TaskController.getAllTasks(mockReq, mockRes, mockNext);
 
             expect(TaskModel.getAllTasks).toHaveBeenCalledWith(1, 5, null, 'createdAt');
             expect(TaskModel.getTasksCount).toHaveBeenCalledWith(null);
@@ -107,6 +113,7 @@ describe('TaskController', () => {
                     limit: 5
                 }
             });
+            expect(mockNext).not.toHaveBeenCalled();
         });
 
         test('should get tasks with custom pagination and status filter', async () => {
@@ -123,7 +130,7 @@ describe('TaskController', () => {
             TaskModel.getAllTasks.mockResolvedValue(mockTasks);
             TaskModel.getTasksCount.mockResolvedValue(25);
 
-            await TaskController.getAllTasks(mockReq, mockRes);
+            await TaskController.getAllTasks(mockReq, mockRes, mockNext);
 
             expect(TaskModel.getAllTasks).toHaveBeenCalledWith(2, 10, 'pending', 'createdAt');
             expect(TaskModel.getTasksCount).toHaveBeenCalledWith('pending');
@@ -137,6 +144,7 @@ describe('TaskController', () => {
                     limit: 10
                 }
             });
+            expect(mockNext).not.toHaveBeenCalled();
         });
 
         test('should handle pagination with exact division', async () => {
@@ -152,7 +160,7 @@ describe('TaskController', () => {
             TaskModel.getAllTasks.mockResolvedValue(mockTasks);
             TaskModel.getTasksCount.mockResolvedValue(10);
 
-            await TaskController.getAllTasks(mockReq, mockRes);
+            await TaskController.getAllTasks(mockReq, mockRes, mockNext);
 
             expect(mockRes.json).toHaveBeenCalledWith({
                 tasks: mockTasks,
@@ -163,6 +171,7 @@ describe('TaskController', () => {
                     limit: 5
                 }
             });
+            expect(mockNext).not.toHaveBeenCalled();
         });
 
         test('should get tasks with deadline sorting', async () => {
@@ -180,7 +189,7 @@ describe('TaskController', () => {
             TaskModel.getAllTasks.mockResolvedValue(mockTasks);
             TaskModel.getTasksCount.mockResolvedValue(10);
 
-            await TaskController.getAllTasks(mockReq, mockRes);
+            await TaskController.getAllTasks(mockReq, mockRes, mockNext);
 
             expect(TaskModel.getAllTasks).toHaveBeenCalledWith(1, 5, null, 'deadline');
             expect(mockRes.status).toHaveBeenCalledWith(200);
@@ -193,6 +202,7 @@ describe('TaskController', () => {
                     limit: 5
                 }
             });
+            expect(mockNext).not.toHaveBeenCalled();
         });
 
         test('should get tasks with custom pagination, status filter, and deadline sorting', async () => {
@@ -210,7 +220,7 @@ describe('TaskController', () => {
             TaskModel.getAllTasks.mockResolvedValue(mockTasks);
             TaskModel.getTasksCount.mockResolvedValue(25);
 
-            await TaskController.getAllTasks(mockReq, mockRes);
+            await TaskController.getAllTasks(mockReq, mockRes, mockNext);
 
             expect(TaskModel.getAllTasks).toHaveBeenCalledWith(2, 10, 'pending', 'deadline');
             expect(TaskModel.getTasksCount).toHaveBeenCalledWith('pending');
@@ -224,6 +234,7 @@ describe('TaskController', () => {
                     limit: 10
                 }
             });
+            expect(mockNext).not.toHaveBeenCalled();
         });
 
         test('should default to createdAt sorting when no sort parameter provided', async () => {
@@ -239,23 +250,24 @@ describe('TaskController', () => {
             TaskModel.getAllTasks.mockResolvedValue(mockTasks);
             TaskModel.getTasksCount.mockResolvedValue(10);
 
-            await TaskController.getAllTasks(mockReq, mockRes);
+            await TaskController.getAllTasks(mockReq, mockRes, mockNext);
 
             expect(TaskModel.getAllTasks).toHaveBeenCalledWith(1, 5, null, 'createdAt');
         });
 
-        test('should handle errors and return 500 status', async () => {
+        test('should handle errors and call next with error', async () => {
             mockReq = {
                 query: {}
             };
 
-            const error = new Error('Database error');
+            const error = new ApiError(500, 'Database error occurred while fetching tasks');
             TaskModel.getAllTasks.mockRejectedValue(error);
 
-            await TaskController.getAllTasks(mockReq, mockRes);
+            await TaskController.getAllTasks(mockReq, mockRes, mockNext);
 
-            expect(mockRes.status).toHaveBeenCalledWith(500);
-            expect(mockRes.json).toHaveBeenCalledWith({ message: 'Error getting tasks' });
+            expect(mockNext).toHaveBeenCalledWith(error);
+            expect(mockRes.status).not.toHaveBeenCalled();
+            expect(mockRes.json).not.toHaveBeenCalled();
         });
     });
 
@@ -274,11 +286,12 @@ describe('TaskController', () => {
 
             TaskModel.getTaskById.mockResolvedValue(mockTask);
 
-            await TaskController.getTaskById(mockReq, mockRes);
+            await TaskController.getTaskById(mockReq, mockRes, mockNext);
 
             expect(TaskModel.getTaskById).toHaveBeenCalledWith('1');
             expect(mockRes.status).toHaveBeenCalledWith(200);
             expect(mockRes.json).toHaveBeenCalledWith(mockTask);
+            expect(mockNext).not.toHaveBeenCalled();
         });
 
         test('should return 404 when task not found', async () => {
@@ -288,11 +301,12 @@ describe('TaskController', () => {
 
             TaskModel.getTaskById.mockResolvedValue(null);
 
-            await TaskController.getTaskById(mockReq, mockRes);
+            await TaskController.getTaskById(mockReq, mockRes, mockNext);
 
             expect(TaskModel.getTaskById).toHaveBeenCalledWith('999');
-            expect(mockRes.status).toHaveBeenCalledWith(404);
-            expect(mockRes.json).toHaveBeenCalledWith({ message: 'Task not found' });
+            expect(mockNext).toHaveBeenCalledWith(new ApiError(404, 'Task not found'));
+            expect(mockRes.status).not.toHaveBeenCalled();
+            expect(mockRes.json).not.toHaveBeenCalled();
         });
 
         test('should handle errors and return 500 status', async () => {
@@ -300,13 +314,14 @@ describe('TaskController', () => {
                 params: { id: '1' }
             };
 
-            const error = new Error('Database error');
+            const error = new ApiError(500, 'Database error occurred while fetching task');
             TaskModel.getTaskById.mockRejectedValue(error);
 
-            await TaskController.getTaskById(mockReq, mockRes);
+            await TaskController.getTaskById(mockReq, mockRes, mockNext);
 
-            expect(mockRes.status).toHaveBeenCalledWith(500);
-            expect(mockRes.json).toHaveBeenCalledWith({ message: 'Error getting task by ID' });
+            expect(mockNext).toHaveBeenCalledWith(error);
+            expect(mockRes.status).not.toHaveBeenCalled();
+            expect(mockRes.json).not.toHaveBeenCalled();
         });
     });
 
@@ -331,7 +346,7 @@ describe('TaskController', () => {
 
             TaskModel.updateTask.mockResolvedValue(updatedTask);
 
-            await TaskController.updateTask(mockReq, mockRes);
+            await TaskController.updateTask(mockReq, mockRes, mockNext);
 
             expect(TaskModel.updateTask).toHaveBeenCalledWith('1', {
                 title: 'Updated Task',
@@ -340,6 +355,7 @@ describe('TaskController', () => {
             });
             expect(mockRes.status).toHaveBeenCalledWith(200);
             expect(mockRes.json).toHaveBeenCalledWith(updatedTask);
+            expect(mockNext).not.toHaveBeenCalled();
         });
 
         test('should return 404 when task not found for update', async () => {
@@ -350,11 +366,12 @@ describe('TaskController', () => {
 
             TaskModel.updateTask.mockResolvedValue(null);
 
-            await TaskController.updateTask(mockReq, mockRes);
+            await TaskController.updateTask(mockReq, mockRes, mockNext);
 
             expect(TaskModel.updateTask).toHaveBeenCalledWith('999', { title: 'Updated Task', deadline: null });
-            expect(mockRes.status).toHaveBeenCalledWith(404);
-            expect(mockRes.json).toHaveBeenCalledWith({ message: 'Task not found' });
+            expect(mockNext).toHaveBeenCalledWith(new ApiError(404, 'Task not found'));
+            expect(mockRes.status).not.toHaveBeenCalled();
+            expect(mockRes.json).not.toHaveBeenCalled();
         });
 
         test('should handle errors and return 500 status', async () => {
@@ -363,13 +380,14 @@ describe('TaskController', () => {
                 body: { title: 'Updated Task', deadline: '2025-12-31T23:59:59Z' }
             };
 
-            const error = new Error('Database error');
+            const error = new ApiError(500, 'Database error occurred while updating task');
             TaskModel.updateTask.mockRejectedValue(error);
 
-            await TaskController.updateTask(mockReq, mockRes);
+            await TaskController.updateTask(mockReq, mockRes, mockNext);
 
-            expect(mockRes.status).toHaveBeenCalledWith(500);
-            expect(mockRes.json).toHaveBeenCalledWith({ message: 'Error updating task' });
+            expect(mockNext).toHaveBeenCalledWith(error);
+            expect(mockRes.status).not.toHaveBeenCalled();
+            expect(mockRes.json).not.toHaveBeenCalled();
         });
 
         test('should return 400 for invalid deadline format in update', async () => {
@@ -381,10 +399,11 @@ describe('TaskController', () => {
                 }
             };
 
-            await TaskController.updateTask(mockReq, mockRes);
+            await TaskController.updateTask(mockReq, mockRes, mockNext);
 
-            expect(mockRes.status).toHaveBeenCalledWith(400);
-            expect(mockRes.json).toHaveBeenCalledWith({ message: 'Invalid deadline format. Must be a valid ISO date string.' });
+            expect(mockNext).toHaveBeenCalledWith(new ApiError(400, 'Invalid deadline format. Must be a valid ISO date string.'));
+            expect(mockRes.status).not.toHaveBeenCalled();
+            expect(mockRes.json).not.toHaveBeenCalled();
         });
     });
 
@@ -396,11 +415,12 @@ describe('TaskController', () => {
 
             TaskModel.softDeleteTask.mockResolvedValue({ id: 1 });
 
-            await TaskController.deleteTask(mockReq, mockRes);
+            await TaskController.deleteTask(mockReq, mockRes, mockNext);
 
             expect(TaskModel.softDeleteTask).toHaveBeenCalledWith('1');
             expect(mockRes.status).toHaveBeenCalledWith(200);
             expect(mockRes.json).toHaveBeenCalledWith({ message: 'Task marked for deletion successfully' });
+            expect(mockNext).not.toHaveBeenCalled();
         });
 
         test('should return 404 when task not found for deletion', async () => {
@@ -410,11 +430,12 @@ describe('TaskController', () => {
 
             TaskModel.softDeleteTask.mockResolvedValue(null);
 
-            await TaskController.deleteTask(mockReq, mockRes);
+            await TaskController.deleteTask(mockReq, mockRes, mockNext);
 
             expect(TaskModel.softDeleteTask).toHaveBeenCalledWith('999');
-            expect(mockRes.status).toHaveBeenCalledWith(404);
-            expect(mockRes.json).toHaveBeenCalledWith({ message: 'Task not found' });
+            expect(mockNext).toHaveBeenCalledWith(new ApiError(404, 'Task not found'));
+            expect(mockRes.status).not.toHaveBeenCalled();
+            expect(mockRes.json).not.toHaveBeenCalled();
         });
 
         test('should handle errors and return 500 status', async () => {
@@ -422,13 +443,14 @@ describe('TaskController', () => {
                 params: { id: '1' }
             };
 
-            const error = new Error('Database error');
+            const error = new ApiError(500, 'Database error occurred while deleting task');
             TaskModel.softDeleteTask.mockRejectedValue(error);
 
-            await TaskController.deleteTask(mockReq, mockRes);
+            await TaskController.deleteTask(mockReq, mockRes, mockNext);
 
-            expect(mockRes.status).toHaveBeenCalledWith(500);
-            expect(mockRes.json).toHaveBeenCalledWith({ message: 'Error deleting task' });
+            expect(mockNext).toHaveBeenCalledWith(error);
+            expect(mockRes.status).not.toHaveBeenCalled();
+            expect(mockRes.json).not.toHaveBeenCalled();
         });
     });
 
@@ -449,11 +471,12 @@ describe('TaskController', () => {
 
             TaskModel.restoreTask.mockResolvedValue(restoredTask);
 
-            await TaskController.restoreTask(mockReq, mockRes);
+            await TaskController.restoreTask(mockReq, mockRes, mockNext);
 
             expect(TaskModel.restoreTask).toHaveBeenCalledWith('1');
             expect(mockRes.status).toHaveBeenCalledWith(200);
             expect(mockRes.json).toHaveBeenCalledWith(restoredTask);
+            expect(mockNext).not.toHaveBeenCalled();
         });
 
         test('should return 404 when task not found for restore', async () => {
@@ -463,11 +486,12 @@ describe('TaskController', () => {
 
             TaskModel.restoreTask.mockResolvedValue(null);
 
-            await TaskController.restoreTask(mockReq, mockRes);
+            await TaskController.restoreTask(mockReq, mockRes, mockNext);
 
             expect(TaskModel.restoreTask).toHaveBeenCalledWith('999');
-            expect(mockRes.status).toHaveBeenCalledWith(404);
-            expect(mockRes.json).toHaveBeenCalledWith({ message: 'Task not found' });
+            expect(mockNext).toHaveBeenCalledWith(new ApiError(404, 'Task not found'));
+            expect(mockRes.status).not.toHaveBeenCalled();
+            expect(mockRes.json).not.toHaveBeenCalled();
         });
 
         test('should handle errors and return 500 status', async () => {
@@ -475,13 +499,15 @@ describe('TaskController', () => {
                 params: { id: '1' }
             };
 
-            TaskModel.restoreTask.mockRejectedValue(new Error('Database error'));
+            const error = new ApiError(500, 'Database error occurred while restoring task');
+            TaskModel.restoreTask.mockRejectedValue(error);
 
-            await TaskController.restoreTask(mockReq, mockRes);
+            await TaskController.restoreTask(mockReq, mockRes, mockNext);
 
             expect(TaskModel.restoreTask).toHaveBeenCalledWith('1');
-            expect(mockRes.status).toHaveBeenCalledWith(500);
-            expect(mockRes.json).toHaveBeenCalledWith({ message: 'Error restoring task' });
+            expect(mockNext).toHaveBeenCalledWith(error);
+            expect(mockRes.status).not.toHaveBeenCalled();
+            expect(mockRes.json).not.toHaveBeenCalled();
         });
     });
 
@@ -493,11 +519,12 @@ describe('TaskController', () => {
 
             TaskModel.permanentDeleteTask.mockResolvedValue({ id: 1 });
 
-            await TaskController.permanentDeleteTask(mockReq, mockRes);
+            await TaskController.permanentDeleteTask(mockReq, mockRes, mockNext);
 
             expect(TaskModel.permanentDeleteTask).toHaveBeenCalledWith('1');
             expect(mockRes.status).toHaveBeenCalledWith(200);
             expect(mockRes.json).toHaveBeenCalledWith({ message: 'Task permanently deleted successfully' });
+            expect(mockNext).not.toHaveBeenCalled();
         });
 
         test('should return 404 when task not found for permanent deletion', async () => {
@@ -507,11 +534,12 @@ describe('TaskController', () => {
 
             TaskModel.permanentDeleteTask.mockResolvedValue(null);
 
-            await TaskController.permanentDeleteTask(mockReq, mockRes);
+            await TaskController.permanentDeleteTask(mockReq, mockRes, mockNext);
 
             expect(TaskModel.permanentDeleteTask).toHaveBeenCalledWith('999');
-            expect(mockRes.status).toHaveBeenCalledWith(404);
-            expect(mockRes.json).toHaveBeenCalledWith({ message: 'Task not found' });
+            expect(mockNext).toHaveBeenCalledWith(new ApiError(404, 'Task not found'));
+            expect(mockRes.status).not.toHaveBeenCalled();
+            expect(mockRes.json).not.toHaveBeenCalled();
         });
 
         test('should handle errors and return 500 status', async () => {
@@ -519,13 +547,15 @@ describe('TaskController', () => {
                 params: { id: '1' }
             };
 
-            TaskModel.permanentDeleteTask.mockRejectedValue(new Error('Database error'));
+            const error = new ApiError(500, 'Database error occurred while permanently deleting task');
+            TaskModel.permanentDeleteTask.mockRejectedValue(error);
 
-            await TaskController.permanentDeleteTask(mockReq, mockRes);
+            await TaskController.permanentDeleteTask(mockReq, mockRes, mockNext);
 
             expect(TaskModel.permanentDeleteTask).toHaveBeenCalledWith('1');
-            expect(mockRes.status).toHaveBeenCalledWith(500);
-            expect(mockRes.json).toHaveBeenCalledWith({ message: 'Error permanently deleting task' });
+            expect(mockNext).toHaveBeenCalledWith(error);
+            expect(mockRes.status).not.toHaveBeenCalled();
+            expect(mockRes.json).not.toHaveBeenCalled();
         });
     });
 
@@ -543,12 +573,13 @@ describe('TaskController', () => {
             TaskModel.getDeletedTasks.mockResolvedValue(deletedTasks);
             TaskModel.permanentDeleteTask.mockResolvedValue({ id: 1 });
 
-            await TaskController.cleanupDeletedTasks(mockReq, mockRes);
+            await TaskController.cleanupDeletedTasks(mockReq, mockRes, mockNext);
 
             expect(TaskModel.getDeletedTasks).toHaveBeenCalledWith(5);
             expect(TaskModel.permanentDeleteTask).toHaveBeenCalledTimes(2);
             expect(mockRes.status).toHaveBeenCalledWith(200);
             expect(mockRes.json).toHaveBeenCalledWith({ message: '2 old deleted tasks permanently removed' });
+            expect(mockNext).not.toHaveBeenCalled();
         });
 
         test('should cleanup old deleted tasks with custom olderThanMinutes', async () => {
@@ -576,12 +607,13 @@ describe('TaskController', () => {
 
             TaskModel.getDeletedTasks.mockResolvedValue([]);
 
-            await TaskController.cleanupDeletedTasks(mockReq, mockRes);
+            await TaskController.cleanupDeletedTasks(mockReq, mockRes, mockNext);
 
             expect(TaskModel.getDeletedTasks).toHaveBeenCalledWith(5);
             expect(TaskModel.permanentDeleteTask).not.toHaveBeenCalled();
             expect(mockRes.status).toHaveBeenCalledWith(200);
             expect(mockRes.json).toHaveBeenCalledWith({ message: '0 old deleted tasks permanently removed' });
+            expect(mockNext).not.toHaveBeenCalled();
         });
 
         test('should handle errors and return 500 status', async () => {
@@ -589,12 +621,14 @@ describe('TaskController', () => {
                 query: {}
             };
 
-            TaskModel.getDeletedTasks.mockRejectedValue(new Error('Database error'));
+            const error = new ApiError(500, 'Database error occurred while fetching deleted tasks');
+            TaskModel.getDeletedTasks.mockRejectedValue(error);
 
-            await TaskController.cleanupDeletedTasks(mockReq, mockRes);
+            await TaskController.cleanupDeletedTasks(mockReq, mockRes, mockNext);
 
-            expect(mockRes.status).toHaveBeenCalledWith(500);
-            expect(mockRes.json).toHaveBeenCalledWith({ message: 'Error cleaning up deleted tasks' });
+            expect(mockNext).toHaveBeenCalledWith(error);
+            expect(mockRes.status).not.toHaveBeenCalled();
+            expect(mockRes.json).not.toHaveBeenCalled();
         });
     });
 });
