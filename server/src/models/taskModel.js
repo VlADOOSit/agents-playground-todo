@@ -1,99 +1,198 @@
 const pool = require('../db/pool');
 const { TASKS_PER_PAGE } = require('../utils/constant');
+const ApiError = require('../utils/ApiError');
 
 class TaskModel {
     async createTask(title, description, status, deadline = null) {
-        const result = await pool.query(
-            'INSERT INTO tasks (title, description, status, deadline) VALUES ($1, $2, $3, $4) RETURNING id, title, description, status, deadline, created_at, updated_at;',
-            [title, description, status, deadline]
-        );
-        return result.rows[0];
+        try {
+            const result = await pool.query(
+                'INSERT INTO tasks (title, description, status, deadline) VALUES ($1, $2, $3, $4) RETURNING id, title, description, status, deadline, created_at, updated_at;',
+                [title, description, status, deadline]
+            );
+            return result.rows[0];
+        } catch (error) {
+            if (error.code === '23505') {
+                throw new ApiError(409, 'Task with this title already exists');
+            }
+            if (error.code === '23514') {
+                throw new ApiError(400, 'Invalid data provided');
+            }
+            if (error.code === '23502') {
+                throw new ApiError(400, 'Required field is missing');
+            }
+            throw new ApiError(500, 'Database error occurred');
+        }
     }
 
     async getAllTasks(page = 1, limit = TASKS_PER_PAGE, status = null, sort = 'createdAt') {
-        const offset = (page - 1) * limit;
-        let query = 'SELECT * FROM tasks WHERE deleted_at IS NULL';
-        const queryValues = [limit, offset];
-        let paramIndex = 3;
+        try {
+            const offset = (page - 1) * limit;
+            let query = 'SELECT * FROM tasks WHERE deleted_at IS NULL';
+            const queryValues = [limit, offset];
+            let paramIndex = 3;
 
-        if (status && status !== 'ALL') {
-            query += ' AND status = $' + paramIndex;
-            queryValues.push(status);
-            paramIndex++;
+            if (status && status !== 'ALL') {
+                query += ' AND status = $' + paramIndex;
+                queryValues.push(status);
+                paramIndex++;
+            }
+
+            if (sort === 'deadline') {
+                query += ' ORDER BY deadline IS NULL, deadline ASC LIMIT $1 OFFSET $2;';
+            } else {
+                query += ' ORDER BY created_at DESC LIMIT $1 OFFSET $2;';
+            }
+
+            const result = await pool.query(query, queryValues);
+            return result.rows;
+        } catch (error) {
+            throw new ApiError(500, 'Database error occurred while fetching tasks');
         }
-
-        if (sort === 'deadline') {
-            query += ' ORDER BY deadline IS NULL, deadline ASC LIMIT $1 OFFSET $2;';
-        } else {
-            query += ' ORDER BY created_at DESC LIMIT $1 OFFSET $2;';
-        }
-
-        const result = await pool.query(query, queryValues);
-        return result.rows;
     }
 
     async getTasksCount(status = null) {
-        let query = 'SELECT COUNT(*) as total FROM tasks WHERE deleted_at IS NULL';
-        const queryValues = [];
+        try {
+            let query = 'SELECT COUNT(*) as total FROM tasks WHERE deleted_at IS NULL';
+            const queryValues = [];
 
-        if (status && status !== 'ALL') {
-            query += ' AND status = $1';
-            queryValues.push(status);
+            if (status && status !== 'ALL') {
+                query += ' AND status = $1';
+                queryValues.push(status);
+            }
+
+            const result = await pool.query(query, queryValues);
+            return parseInt(result.rows[0].total);
+        } catch (error) {
+            throw new ApiError(500, 'Database error occurred while counting tasks');
         }
-
-        const result = await pool.query(query, queryValues);
-        return parseInt(result.rows[0].total);
     }
 
     async getTaskById(id) {
-        const result = await pool.query('SELECT * FROM tasks WHERE id = $1 AND deleted_at IS NULL;', [parseInt(id)]);
-        return result.rows[0];
+        try {
+            if (isNaN(id)) {
+                throw new ApiError(400, 'Invalid task ID format');
+            }
+
+            const result = await pool.query('SELECT * FROM tasks WHERE id = $1 AND deleted_at IS NULL;', [parseInt(id)]);
+            return result.rows[0];
+        } catch (error) {
+            if (error instanceof ApiError) {
+                throw error;
+            }
+            throw new ApiError(500, 'Database error occurred while fetching task');
+        }
     }
 
     async updateTask(id, updates) {
-        const setClauses = [];
-        const queryValues = [];
-        let paramIndex = 1;
-
-        for (const key in updates) {
-            if (Object.hasOwnProperty.call(updates, key)) {
-                setClauses.push(`${key} = $${paramIndex}`);
-                queryValues.push(updates[key]);
-                paramIndex++;
+        try {
+            if (isNaN(id)) {
+                throw new ApiError(400, 'Invalid task ID format');
             }
+
+            const setClauses = [];
+            const queryValues = [];
+            let paramIndex = 1;
+
+            for (const key in updates) {
+                if (Object.hasOwnProperty.call(updates, key)) {
+                    setClauses.push(`${key} = $${paramIndex}`);
+                    queryValues.push(updates[key]);
+                    paramIndex++;
+                }
+            }
+
+            if (setClauses.length === 0) {
+                return null;
+            }
+
+            queryValues.push(id);
+
+            const query = `UPDATE tasks SET ${setClauses.join(', ')} WHERE id = $${paramIndex} RETURNING id, title, description, status, deadline, created_at, updated_at;`;
+
+            const result = await pool.query(query, queryValues);
+
+            if (result.rows.length === 0) {
+                return null;
+            }
+
+            return result.rows[0];
+        } catch (error) {
+            if (error instanceof ApiError) {
+                throw error;
+            }
+            if (error.code === '23505') {
+                throw new ApiError(409, 'Task with this title already exists');
+            }
+            if (error.code === '23514') {
+                throw new ApiError(400, 'Invalid data provided');
+            }
+            throw new ApiError(500, 'Database error occurred while updating task');
         }
-
-        if (setClauses.length === 0) {
-            return null;
-        }
-
-        queryValues.push(id);
-
-        const query = `UPDATE tasks SET ${setClauses.join(', ')} WHERE id = $${paramIndex} RETURNING id, title, description, status, deadline, created_at, updated_at;`;
-
-        const result = await pool.query(query, queryValues);
-        return result.rows[0];
     }
 
     async softDeleteTask(id) {
-        const result = await pool.query('UPDATE tasks SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL RETURNING id;', [parseInt(id)]);
-        return result.rows[0];
+        try {
+            if (isNaN(id)) {
+                throw new ApiError(400, 'Invalid task ID format');
+            }
+
+            const result = await pool.query('UPDATE tasks SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL RETURNING id;', [parseInt(id)]);
+            return result.rows[0];
+        } catch (error) {
+            if (error instanceof ApiError) {
+                throw error;
+            }
+            throw new ApiError(500, 'Database error occurred while deleting task');
+        }
     }
 
     async restoreTask(id) {
-        const result = await pool.query('UPDATE tasks SET deleted_at = NULL WHERE id = $1 RETURNING id, title, description, status, deadline, created_at, updated_at;', [parseInt(id)]);
-        return result.rows[0];
+        try {
+            if (isNaN(id)) {
+                throw new ApiError(400, 'Invalid task ID format');
+            }
+
+            const result = await pool.query('UPDATE tasks SET deleted_at = NULL WHERE id = $1 RETURNING id, title, description, status, deadline, created_at, updated_at;', [parseInt(id)]);
+            return result.rows[0];
+        } catch (error) {
+            if (error instanceof ApiError) {
+                throw error;
+            }
+            throw new ApiError(500, 'Database error occurred while restoring task');
+        }
     }
 
     async permanentDeleteTask(id) {
-        const result = await pool.query('DELETE FROM tasks WHERE id = $1 RETURNING id;', [parseInt(id)]);
-        return result.rows[0];
+        try {
+            if (isNaN(id)) {
+                throw new ApiError(400, 'Invalid task ID format');
+            }
+
+            const result = await pool.query('DELETE FROM tasks WHERE id = $1 RETURNING id;', [parseInt(id)]);
+            return result.rows[0];
+        } catch (error) {
+            if (error instanceof ApiError) {
+                throw error;
+            }
+            throw new ApiError(500, 'Database error occurred while permanently deleting task');
+        }
     }
 
     async getDeletedTasks(olderThanMinutes = 5) {
-        const cutoffTime = new Date(Date.now() - olderThanMinutes * 60 * 1000);
-        const result = await pool.query('SELECT * FROM tasks WHERE deleted_at IS NOT NULL AND deleted_at < $1', [cutoffTime]);
-        return result.rows;
+        try {
+            if (isNaN(olderThanMinutes) || olderThanMinutes < 0) {
+                throw new ApiError(400, 'Invalid minutes parameter');
+            }
+
+            const cutoffTime = new Date(Date.now() - olderThanMinutes * 60 * 1000);
+            const result = await pool.query('SELECT * FROM tasks WHERE deleted_at IS NOT NULL AND deleted_at < $1', [cutoffTime]);
+            return result.rows;
+        } catch (error) {
+            if (error instanceof ApiError) {
+                throw error;
+            }
+            throw new ApiError(500, 'Database error occurred while fetching deleted tasks');
+        }
     }
 }
 
