@@ -517,7 +517,12 @@ describe('TaskModel', () => {
                 { id: 2, title: 'Old Task 2', deleted_at: '2025-01-01T00:05:00Z' }
             ];
 
-            const cutoffTime = new Date(Date.now() - 5 * 60 * 1000);
+            const mockNow = Date.now();
+            const expectedCutoffTime = new Date(mockNow - 5 * 60 * 1000);
+
+            // Mock Date.now to return consistent value
+            const originalDateNow = Date.now;
+            Date.now = jest.fn(() => mockNow);
 
             pool.query.mockResolvedValue({
                 rows: mockTasks
@@ -527,15 +532,23 @@ describe('TaskModel', () => {
 
             expect(pool.query).toHaveBeenCalledWith(
                 'SELECT * FROM tasks WHERE deleted_at IS NOT NULL AND deleted_at < $1',
-                [cutoffTime]
+                [expectedCutoffTime]
             );
             expect(result).toEqual(mockTasks);
+
+            // Restore original Date.now
+            Date.now = originalDateNow;
         });
 
         test('should get deleted tasks older than custom minutes', async () => {
             const mockTasks = [{ id: 1, title: 'Old Task', deleted_at: '2025-01-01T00:00:00Z' }];
 
-            const cutoffTime = new Date(Date.now() - 10 * 60 * 1000);
+            const mockNow = Date.now();
+            const expectedCutoffTime = new Date(mockNow - 10 * 60 * 1000);
+
+            // Mock Date.now to return consistent value
+            const originalDateNow = Date.now;
+            Date.now = jest.fn(() => mockNow);
 
             pool.query.mockResolvedValue({
                 rows: mockTasks
@@ -545,13 +558,21 @@ describe('TaskModel', () => {
 
             expect(pool.query).toHaveBeenCalledWith(
                 'SELECT * FROM tasks WHERE deleted_at IS NOT NULL AND deleted_at < $1',
-                [cutoffTime]
+                [expectedCutoffTime]
             );
             expect(result).toEqual(mockTasks);
+
+            // Restore original Date.now
+            Date.now = originalDateNow;
         });
 
         test('should return empty array when no deleted tasks found', async () => {
-            const cutoffTime = new Date(Date.now() - 5 * 60 * 1000);
+            const mockNow = Date.now();
+            const expectedCutoffTime = new Date(mockNow - 5 * 60 * 1000);
+
+            // Mock Date.now to return consistent value
+            const originalDateNow = Date.now;
+            Date.now = jest.fn(() => mockNow);
 
             pool.query.mockResolvedValue({
                 rows: []
@@ -561,9 +582,12 @@ describe('TaskModel', () => {
 
             expect(pool.query).toHaveBeenCalledWith(
                 'SELECT * FROM tasks WHERE deleted_at IS NOT NULL AND deleted_at < $1',
-                [cutoffTime]
+                [expectedCutoffTime]
             );
             expect(result).toEqual([]);
+
+            // Restore original Date.now
+            Date.now = originalDateNow;
         });
 
         test('should handle database errors', async () => {
